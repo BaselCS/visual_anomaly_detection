@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+data/*
+*json
+zip/*
+*.zip
+*.png
+*.md
+*.safe*
