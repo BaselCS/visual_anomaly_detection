@@ -270,26 +270,3 @@ if auc_score is not None:
 else:
     print("⚠ INSUFFICIENT DATA: Need both good and defect samples to evaluate.")
 print("="*50)
-
-
-
-.
-├── bottle
-│   ├── ground_truth
-│   │   ├── broken_large
-│   │   ├── broken_small
-│   │   └── contamination
-│   ├── license.txt
-│   ├── readme.txt
-│   ├── test
-│   │   ├── broken_large
-│   │   ├── broken_small
-│   │   ├── contamination
-│   │   └── good
-│   └── train
-│       └── good
-├── capsule
-│   ├── ground_truth
-│   │   ├── crack
-│   │   ├── faulty_imprint
-│   │   ├── poke
