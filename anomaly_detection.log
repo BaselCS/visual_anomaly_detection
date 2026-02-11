@@ -1,0 +1,21 @@
+2026-02-09 08:33:34,312 - INFO - Detecting trained models...
+2026-02-09 08:33:34,312 - INFO -   ✓ Found best model: trained_models/best_model
+2026-02-09 08:33:34,313 - INFO -   Training info: Best epoch 35 with loss 0.043769182477678574
+2026-02-09 08:33:34,313 - INFO - 
+✓ Using best model
+2026-02-09 08:33:34,313 - INFO - Will test categories: bottle
+
+2026-02-09 08:33:34,313 - INFO - 
+Starting Anomaly Detection...
+==================================================
+2026-02-09 08:33:34,313 - INFO - 
+======================================================================
+2026-02-09 08:33:34,313 - INFO - 📦 TESTING CATEGORY: BOTTLE
+2026-02-09 08:33:34,313 - INFO -    Model: trained_models/best_model
+2026-02-09 08:33:34,313 - INFO - ======================================================================
+2026-02-09 08:33:34,313 - INFO - Loading base model...
+2026-02-09 08:33:34,764 - INFO - HTTP Request: GET https://huggingface.co/api/models/runwayml/stable-diffusion-v1-5 "HTTP/1.1 307 Temporary Redirect"
+2026-02-09 08:33:34,953 - INFO - HTTP Request: GET https://huggingface.co/api/models/stable-diffusion-v1-5/stable-diffusion-v1-5 "HTTP/1.1 200 OK"
+2026-02-09 08:33:35,134 - INFO - HTTP Request: HEAD https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/model_index.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-09 08:33:35,318 - INFO - HTTP Request: HEAD https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/model_index.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-09 08:33:35,399 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/stable-diffusion-v1-5/stable-diffusion-v1-5/451f4fe16113bff5a5d2269ed5ad43b0592e9a14/model_index.json "HTTP/1.1 200 OK"

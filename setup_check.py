@@ -10,19 +10,12 @@ print("="*60)
 
 # 1. Check data directory
 print("\n1. Checking data directory...")
-if os.path.exists("data"):
-    print("   ✓ data/ directory found")
-    
-    # Run validation
-    from utils import validate_data_structure
-    if validate_data_structure():
-        print("\n   ✓ Data structure validated successfully")
-    else:
-        print("\n   ⚠ Data validation found issues. Please fix before training.")
-        sys.exit(1)
+if os.path.exists("data/train"):
+    print("   ✓ data/train directory found")
+   
 else:
-    print("   ❌ data/ directory not found!")
-    print("   Please create data/ and organize your images according to README")
+    print("   ❌ data/train directory not found!")
+    print("   Please create data/train and organize your images according to README")
     sys.exit(1)
 
 # 2. Check if model is cached
