@@ -32,7 +32,7 @@ config = {
     "lr_scheduler": "cosine",  # Learning rate decay
     "lr_warmup_steps": 100,  # Gradual LR warmup
     "save_every_n_epochs": 5,
-    "save_log_every_n_epochs": 1,  # Save training log more frequently
+    "save_log_every_n_epochs": 1,  
     "output_dir": "trained_models",
     "image_size": 512,
     "early_stop_patience": 10,  # Stop if loss increases for N epochs
@@ -109,12 +109,11 @@ logger.info("\nPreparing dataset...")
 print("\nPreparing dataset...")
 from torchvision import transforms
 
-# data Augmation 
+# Data augmentation
 def get_transforms(category, image_size=512):
     """Get category-specific data augmentation transforms"""
     
     if category == "bottle":
-        # Bottles are usually upright, minimal rotation, allow horizontal flip
         return transforms.Compose([
             transforms.Resize((image_size, image_size)),
             transforms.RandomRotation(degrees=8),
@@ -127,7 +126,6 @@ def get_transforms(category, image_size=512):
         ])
     
     elif category == "capsule":
-        # Capsules can be rotated more, allow both flips
         return transforms.Compose([
             transforms.Resize((image_size, image_size)),
             transforms.RandomRotation(degrees=30),
@@ -141,7 +139,6 @@ def get_transforms(category, image_size=512):
         ])
     
     elif category == "pill":
-        # Pills can be at any angle, allow all rotations and flips
         return transforms.Compose([
             transforms.Resize((image_size, image_size)),
             transforms.RandomRotation(degrees=180),
@@ -155,7 +152,6 @@ def get_transforms(category, image_size=512):
         ])
     
     elif category == "toothbrush":
-        # Toothbrushes have orientation, minimal rotation, horizontal flip ok
         return transforms.Compose([
             transforms.Resize((image_size, image_size)),
             transforms.RandomRotation(degrees=5),
@@ -167,21 +163,10 @@ def get_transforms(category, image_size=512):
             transforms.Normalize([0.5], [0.5])
         ])
     
-    elif category == "zip":
-        # Zippers have orientation, moderate rotation
-        return transforms.Compose([
-            transforms.Resize((image_size, image_size)),
-            transforms.RandomRotation(degrees=15),
-            transforms.RandomHorizontalFlip(p=0.3),
-            transforms.RandomAffine(degrees=0, translate=(0.04, 0.04)),
-            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.08),
-            transforms.RandomAdjustSharpness(sharpness_factor=2, p=0.2),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5])
-        ])
-    
     else:
         # Default transforms for unknown categories
+        print(f"Warning: No specific transforms for category '{category}', using default.")
+        logger.warning(f"Warning: {'🚩'*20} No specific transforms for category '{category}', using default.")
         return transforms.Compose([
             transforms.Resize((image_size, image_size)),
             transforms.RandomRotation(degrees=15),
@@ -295,7 +280,7 @@ def validate(unet, val_dataloader, vae, text_encoder, tokenizer, pipe, device):
                 pixel_values = batch["pixel_values"].to(device, dtype=torch.float16)
                 
                 # Convert to latent space
-                latents = vae.encode(pixel_values).latent_dist.sample() * 0.18215
+                latents = vae.encode(pixel_values).latent_dist.sample() * 0.18215 # Scaling factor for Stable Diffusion latent space
                 
                 # Sample noise
                 noise = torch.randn_like(latents)

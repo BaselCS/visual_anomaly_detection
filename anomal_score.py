@@ -168,7 +168,7 @@ for category, model_path in available_models.items():
     print(f"\n📦 Processing category: {category.upper()}")
     
     # Get all test images for this category from flat directory
-    # Format: category_testtype_0001.png
+    # Format: category_testtype_001.png
     all_test_files = [f for f in os.listdir(test_dir) 
                       if f.lower().endswith('.png') and f.startswith(f"{category}_")]
     
@@ -202,7 +202,7 @@ for category, model_path in available_models.items():
                     num_inference_steps=30
                 ).images[0]
                 
-                # ج. حساب السكور
+              
                 score, diff_map = calculate_anomaly_score(original_image, reconstructed_image)
                 
                 # Store results
@@ -457,25 +457,20 @@ except Exception as e:
 logger.info("\n" + "="*50)
 print("\n" + "="*50)
 if auc_score is not None:
-    if auc_score > 0.8 and f1 > 0.7:
-        logger.info("🎉 SUCCESS: The model performs well at detecting anomalies!")
-        print("🎉 SUCCESS: The model performs well at detecting anomalies!")
-    elif auc_score > 0.6:
-        logger.warning("⚠ MODERATE: The model shows some ability to detect defects.")
-        print("⚠ MODERATE: The model shows some ability to detect defects.")
-        logger.info("   Consider training for more epochs or adjusting parameters.")
-        print("   Consider training for more epochs or adjusting parameters.")
-    else:
-        logger.warning("❌ POOR: The model needs significant improvement.")
-        print("❌ POOR: The model needs significant improvement.")
-        logger.info("   Recommendations:")
-        print("   Recommendations:")
-        logger.info("   - Train for more epochs (current: check training_log.json)")
-        print("   - Train for more epochs (current: check training_log.json)")
-        logger.info("   - Increase batch size if GPU memory allows")
-        print("   - Increase batch size if GPU memory allows")
-        logger.info("   - Verify data quality and variety")
-        print("   - Verify data quality and variety")
+    print(f"\nFinal Assessment:")
+    logger.info(f"\nFinal Assessment:")
+    logger.info(f"  AUC-ROC Score: {auc_score:.4f}")
+    print(f"  AUC-ROC Score: {auc_score:.4f}")
+    logger.info(f"  Optimal Threshold: {optimal_threshold:.4f}")
+    print(f"  Optimal Threshold: {optimal_threshold:.4f}")
+    logger.info(f"  Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
+    print(f"  Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
+    logger.info(f"  Precision: {precision:.4f}")
+    print(f"  Precision: {precision:.4f}")
+    logger.info(f"  Recall: {recall:.4f}")
+    print(f"  Recall: {recall:.4f}")
+    logger.info(f"  F1-Score: {f1:.4f}")
+    print(f"  F1-Score: {f1:.4f}")
 else:
     logger.warning("⚠ INSUFFICIENT DATA: Need both good and defect samples to evaluate.")
     print("⚠ INSUFFICIENT DATA: Need both good and defect samples to evaluate.")
