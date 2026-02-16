@@ -13,6 +13,5 @@ data/*
 *json
 zip/*
 *.zip
-*.png
 *.md
 *.safe*
