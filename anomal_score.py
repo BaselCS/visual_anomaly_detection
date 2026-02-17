@@ -381,8 +381,8 @@ logger.info(f"✓ Total result files: {total_files}")
 print(f"✓ Total result files: {total_files}")
 
 # Generate training visualization and save with matching number
-logger.info("\n📊 Generating training visualization...")
-print("\n📊 Generating training visualization...")
+logger.info("\n Generating training visualization...")
+print("\n Generating training visualization...")
 try:
     # Load the training log
     training_log_path = os.path.join(trained_models_dir, "training_log.json")
