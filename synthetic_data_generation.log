@@ -1,0 +1,40 @@
+2026-02-24 22:52:31,190 - INFO - Detected category counts from train dir:
+2026-02-24 22:52:31,190 - INFO -   bottle: 209 real/total images
+2026-02-24 22:52:31,191 - INFO -   capsule: 219 real/total images
+2026-02-24 22:52:31,191 - INFO -   pill: 267 real/total images
+2026-02-24 22:52:31,191 - INFO -   toothbrush: 60 real/total images
+2026-02-24 22:52:31,191 - INFO - Loading Stable Diffusion pipeline...
+2026-02-24 22:55:50,786 - INFO - Detected category counts from train dir:
+2026-02-24 22:55:50,787 - INFO -   bottle: 209 real/total images
+2026-02-24 22:55:50,787 - INFO -   capsule: 219 real/total images
+2026-02-24 22:55:50,787 - INFO -   pill: 267 real/total images
+2026-02-24 22:55:50,787 - INFO -   toothbrush: 60 real/total images
+2026-02-24 22:55:50,787 - INFO - Loading Stable Diffusion pipeline...
+2026-02-24 22:56:11,617 - INFO - ================================================================
+2026-02-24 22:56:11,617 - INFO - Category: bottle | real=209 | target_synthetic=63 | max_tries=504
+2026-02-24 23:00:12,166 - INFO - Finished bottle: generated=63, attempts=63, rejected_blur=0, rejected_brightness=0, rejected_duplicate=0
+2026-02-24 23:00:12,166 - INFO - ================================================================
+2026-02-24 23:00:12,166 - INFO - Category: capsule | real=219 | target_synthetic=66 | max_tries=528
+2026-02-24 23:04:22,945 - INFO - Finished capsule: generated=66, attempts=66, rejected_blur=0, rejected_brightness=0, rejected_duplicate=0
+2026-02-24 23:04:22,946 - INFO - ================================================================
+2026-02-24 23:04:22,946 - INFO - Category: pill | real=267 | target_synthetic=80 | max_tries=640
+2026-02-24 23:09:49,908 - INFO - Detected category counts from train dir:
+2026-02-24 23:09:49,909 - INFO -   bottle: 209 real/total images
+2026-02-24 23:09:49,909 - INFO -   capsule: 219 real/total images
+2026-02-24 23:09:49,909 - INFO -   pill: 267 real/total images
+2026-02-24 23:09:49,909 - INFO -   toothbrush: 60 real/total images
+2026-02-24 23:09:49,909 - INFO - Loading Stable Diffusion Img2Img pipeline...
+2026-02-24 23:10:13,990 - INFO - ================================================================
+2026-02-24 23:10:13,991 - INFO - Category: bottle | real=209 | target_synthetic=63 | max_tries=504
+2026-02-24 23:19:57,821 - INFO - Finished bottle: generated=0, attempts=504, rejected_blur=0, rejected_brightness=0, rejected_duplicate=504
+2026-02-24 23:19:57,821 - INFO - ================================================================
+2026-02-24 23:19:57,821 - INFO - Category: capsule | real=219 | target_synthetic=66 | max_tries=528
+2026-02-24 23:30:13,412 - INFO - Finished capsule: generated=0, attempts=528, rejected_blur=0, rejected_brightness=0, rejected_duplicate=528
+2026-02-24 23:30:13,412 - INFO - ================================================================
+2026-02-24 23:30:13,412 - INFO - Category: pill | real=267 | target_synthetic=80 | max_tries=640
+2026-02-24 23:42:26,436 - INFO - Finished pill: generated=0, attempts=640, rejected_blur=0, rejected_brightness=0, rejected_duplicate=640
+2026-02-24 23:42:26,436 - INFO - ================================================================
+2026-02-24 23:42:26,436 - INFO - Category: toothbrush | real=60 | target_synthetic=18 | max_tries=144
+2026-02-24 23:45:12,182 - INFO - Finished toothbrush: generated=0, attempts=144, rejected_blur=0, rejected_brightness=0, rejected_duplicate=144
+2026-02-24 23:45:12,182 - INFO - ================================================================
+2026-02-24 23:45:12,182 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260224_234512.json

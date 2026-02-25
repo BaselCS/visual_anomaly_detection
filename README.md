@@ -33,25 +33,37 @@ Reorganizes raw data from category-specific folders into the flat directory stru
 uv run python moving_images.py
 ```
 
-### 4. `main.py`
+### 4. `generate_synthetic_data.py`
+Generates additional high-quality synthetic **normal** training images and appends them to `data/train` in the same filename format used by training.
+Recommended first run (safe ratio):
+```bash
+uv run python generate_synthetic_data.py --ratio 0.3 --max-per-category 120
+```
+
+If you need to target specific categories only:
+```bash
+uv run python generate_synthetic_data.py --categories bottle capsule --ratio 0.25
+```
+
+### 5. `main.py`
 The primary training script. It trains a LoRA model on the provided images for anomaly reconstruction.
 ```bash
 uv run python main.py
 ```
 
-### 5. `check_progress.py`
+### 6. `check_progress.py`
 Monitor training progress in real-time. It provides epoch status, loss trends, and estimated time remaining by reading the training logs.
 ```bash
 uv run python check_progress.py
 ```
 
-### 6. `resume_training.py`
+### 7. `resume_training.py`
 Helper script to resume training from a specific checkpoint if it was interrupted ( not tested well yet, use with caution). Provide the epoch number to resume from as an argument.
 ```bash
 uv run python resume_training.py [epoch_number]
 ```
 
-### 7. `anomal_score.py`
+### 8. `anomal_score.py`
 Performs anomaly detection on the test dataset using the trained model. It calculates reconstruction errors, determines optimal thresholds using ROC curves, and saves visualizations.
 ```bash
 uv run python anomal_score.py

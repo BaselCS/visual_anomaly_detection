@@ -26,17 +26,44 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+def resolve_latest_train_run(base_dir: str) -> str:
+    """Return latest trainX directory if present, else return base_dir."""
+    if not os.path.exists(base_dir):
+        return base_dir
+
+    train_dirs = []
+    for name in os.listdir(base_dir):
+        full_path = os.path.join(base_dir, name)
+        if not os.path.isdir(full_path):
+            continue
+        if name.startswith("train") and name[5:].isdigit():
+            train_dirs.append((int(name[5:]), full_path))
+
+    if not train_dirs:
+        return base_dir
+
+    train_dirs.sort(key=lambda x: x[0], reverse=True)
+    return train_dirs[0][1]
+
 # 1. Auto-detect trained models
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model_id = "runwayml/stable-diffusion-v1-5"
 trained_models_dir = "trained_models"
+run_models_dir = resolve_latest_train_run(trained_models_dir)
 
 logger.info("Detecting trained models...")
 print("Detecting trained models...")
+if run_models_dir != trained_models_dir:
+    logger.info(f"Detected latest training run: {run_models_dir}")
+    print(f"Detected latest training run: {run_models_dir}")
+else:
+    logger.info(f"Using legacy model directory: {run_models_dir}")
+    print(f"Using legacy model directory: {run_models_dir}")
 
 # Check for best model first, then final model, then checkpoints
-best_model_path = os.path.join(trained_models_dir, "best_model")
-final_model_path = os.path.join(trained_models_dir, "final_model")
+best_model_path = os.path.join(run_models_dir, "best_model")
+final_model_path = os.path.join(run_models_dir, "final_model")
 
 model_path = None
 model_type = None
@@ -53,11 +80,11 @@ elif os.path.exists(final_model_path):
     print(f"  ✓ Found final model: {final_model_path}")
 else:
     # Check for checkpoint with _BEST suffix
-    checkpoints = [d for d in os.listdir(trained_models_dir) 
+    checkpoints = [d for d in os.listdir(run_models_dir) 
                    if d.startswith("checkpoint_epoch_") and "_BEST" in d]
     if checkpoints:
         checkpoints.sort(key=lambda x: int(x.split("_")[2]), reverse=True)
-        model_path = os.path.join(trained_models_dir, checkpoints[0])
+        model_path = os.path.join(run_models_dir, checkpoints[0])
         model_type = "checkpoint"
         logger.info(f"  ✓ Found best checkpoint: {model_path}")
         print(f"  ✓ Found best checkpoint: {model_path}")
@@ -67,18 +94,18 @@ if not model_path:
     print("ERROR: No trained models found!")
     logger.error("Please run main.py first to train the model.")
     print("Please run main.py first to train the model.")
-    logger.error(f"Expected: {trained_models_dir}/best_model/ or {trained_models_dir}/final_model/")
-    print(f"Expected: {trained_models_dir}/best_model/ or {trained_models_dir}/final_model/")
+    logger.error(f"Expected: {run_models_dir}/best_model/ or {run_models_dir}/final_model/")
+    print(f"Expected: {run_models_dir}/best_model/ or {run_models_dir}/final_model/")
     exit(1)
 
 # Read training config to get the trained categories
-training_log_path = os.path.join(trained_models_dir, "training_log.json")
+training_log_path = os.path.join(run_models_dir, "training_log.json")
 if os.path.exists(training_log_path):
     with open(training_log_path, 'r') as f:
         training_log = json.load(f)
         trained_categories = training_log.get("config", {}).get("categories", ["bottle"])
         best_epoch = training_log.get("best_epoch", "unknown")
-        best_loss = training_log.get("best_loss", "unknown")
+        best_loss = training_log.get("best_val_loss", training_log.get("best_loss", "unknown"))
         logger.info(f"  Training info: Best epoch {best_epoch} with loss {best_loss}")
         print(f"  Training info: Best epoch {best_epoch} with loss {best_loss}")
 else:
@@ -124,6 +151,43 @@ os.makedirs(output_dir, exist_ok=True)
 logger.info("\nStarting Anomaly Detection...\n" + "="*50)
 print("\nStarting Anomaly Detection...\n" + "="*50)
 
+# Cache loaded pipelines by model path to avoid repeated full model loads
+pipeline_cache = {}
+
+
+def get_or_create_pipeline(model_path: str):
+    if model_path in pipeline_cache:
+        return pipeline_cache[model_path]
+
+    logger.info("Loading base model...")
+    print("Loading base model...")
+
+    try:
+        pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16,
+            safety_checker=None,
+            requires_safety_checker=False,
+            local_files_only=True,
+        ).to(device)
+    except Exception as e:
+        raise RuntimeError(
+            "Could not load Stable Diffusion model from local cache. "
+            "Run 'uv run python download_model.py' once, then retry anomaly scoring. "
+            f"Original error: {e}"
+        )
+
+    # Attach LoRA once for this model path
+    pipe.unet = PeftModel.from_pretrained(pipe.unet, model_path)
+    pipe.unet.eval()
+
+    # Memory stability options for long evaluation runs
+    pipe.enable_attention_slicing()
+    pipe.enable_vae_slicing()
+
+    pipeline_cache[model_path] = pipe
+    return pipe
+
 # Test each category with its own trained model
 for category, model_path in available_models.items():
     logger.info(f"\n{'='*70}")
@@ -135,19 +199,9 @@ for category, model_path in available_models.items():
     logger.info(f"{'='*70}")
     print(f"{'='*70}")
     
-    # Load the base model
-    logger.info("Loading base model...")
-    print("Loading base model...")
-    pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
-        model_id, 
-        torch_dtype=torch.float16,
-        safety_checker=None,
-        requires_safety_checker=False
-    ).to(device)
-    
-    # Load the trained LoRA weights for this category
+    # Load or reuse base+LoRA model for this category
     try:
-        pipe.unet = PeftModel.from_pretrained(pipe.unet, model_path)
+        pipe = get_or_create_pipeline(model_path)
         logger.info(f"✓ Loaded trained model for {category}\n")
         print(f"✓ Loaded trained model for {category}\n")
     except Exception as e:
@@ -226,9 +280,7 @@ for category, model_path in available_models.items():
     logger.info(f"  ✓ Processed {len(category_results)} images")
     print(f"  ✓ Processed {len(category_results)} images")
     
-    # Clean up GPU memory before next category
-    del pipe
-    torch.cuda.empty_cache()
+    # Keep cached pipeline loaded to avoid expensive and unstable reloads
 
 logger.info("\n" + "="*50)
 print("\n" + "="*50)
@@ -330,6 +382,7 @@ for category, results in all_results.items():
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 current_run_data = {
     "timestamp": timestamp,
+    "run_directory": run_models_dir,
     "model_type": model_type,
     "model_path": model_path,
     "optimal_threshold": float(optimal_threshold) if optimal_threshold is not None else None,
@@ -385,14 +438,14 @@ logger.info("\n Generating training visualization...")
 print("\n Generating training visualization...")
 try:
     # Load the training log
-    training_log_path = os.path.join(trained_models_dir, "training_log.json")
+    training_log_path = os.path.join(run_models_dir, "training_log.json")
     if os.path.exists(training_log_path):
         with open(training_log_path, 'r') as f:
             train_log = json.load(f)
         
         # Extract data
         epochs = [entry['epoch'] for entry in train_log['epochs']]
-        losses = [entry['avg_loss'] for entry in train_log['epochs']]
+        losses = [entry.get('avg_loss', entry.get('train_loss')) for entry in train_log['epochs']]
         learning_rates = [entry['learning_rate'] for entry in train_log['epochs']]
         
         # Create figure with subplots

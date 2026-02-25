@@ -1,6 +1,9 @@
 import os
+import math
+import random
 import torch
-from torch.utils.data import Dataset, DataLoader
+import numpy as np
+from torch.utils.data import Dataset, DataLoader, Subset, WeightedRandomSampler
 from torchvision import transforms
 from PIL import Image
 from diffusers import StableDiffusionPipeline
@@ -22,21 +25,48 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def get_next_train_dir(base_dir="trained_models"):
+    """Find the next available trainX directory"""
+    os.makedirs(base_dir, exist_ok=True)
+    train_num = 1
+    while os.path.exists(os.path.join(base_dir, f"train{train_num}")):
+        train_num += 1
+    return os.path.join(base_dir, f"train{train_num}")
+
 config = {
     "categories": ["bottle", "capsule", "pill", "toothbrush"],
-    "epochs": 150, 
+    "epochs": 120,
     "batch_size": 2,  # Optimized for RTX 3060
     "gradient_accumulation_steps": 4,  # Effective batch size = 2 * 4 = 8
-    "learning_rate": 1e-7,  # (was 5e-5,1e-5)
+    "learning_rate": 1e-4,
+    "weight_decay": 1e-2,
     "max_grad_norm": 1.0,  # Gradient clipping to prevent explosion
     "lr_scheduler": "cosine",  # Learning rate decay
-    "lr_warmup_steps": 100,  # Gradual LR warmup
+    "lr_warmup_steps": 100,
+    "lr_eta_min": 1e-6,
     "save_every_n_epochs": 5,
     "save_log_every_n_epochs": 1,  
-    "output_dir": "trained_models",
+    "output_dir": get_next_train_dir("trained_models"),
     "image_size": 512,
-    "early_stop_patience": 10,  # Stop if loss increases for N epochs
+    "train_split": 0.9,
+    "seed": 42,
+    "early_stop_patience": 20,  # Stop if no improvement for x epochs
+    "early_stop_min_delta": 1e-4,
+    "min_epochs_before_early_stop": 20,
 }
+
+
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
+set_seed(config["seed"])
 
 # Training Parameters 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -243,20 +273,57 @@ full_dataset = AnomalyDataset(
     image_size=config["image_size"]
 )
 
-# Split into train (90%) and validation (10%)
-from torch.utils.data import random_split
-train_size = int(0.9 * len(full_dataset))
-val_size = len(full_dataset) - train_size
-train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+# Stratified split into train/validation to preserve category distribution
+rng = random.Random(config["seed"])
+category_to_indices = {}
+for idx, (_, _, category) in enumerate(full_dataset.samples):
+    category_to_indices.setdefault(category, []).append(idx)
+
+train_indices = []
+val_indices = []
+
+for category, indices in sorted(category_to_indices.items()):
+    rng.shuffle(indices)
+    split_at = max(1, int(len(indices) * config["train_split"]))
+    split_at = min(split_at, len(indices) - 1) if len(indices) > 1 else len(indices)
+    train_indices.extend(indices[:split_at])
+    val_indices.extend(indices[split_at:])
+
+# Fallback safety in case of tiny datasets
+if len(val_indices) == 0 and len(train_indices) > 1:
+    val_indices.append(train_indices.pop())
+
+train_dataset = Subset(full_dataset, train_indices)
+val_dataset = Subset(full_dataset, val_indices)
+
+train_size = len(train_indices)
+val_size = len(val_indices)
 
 logger.info(f"\nDataset split: {train_size} training, {val_size} validation")
 print(f"\nDataset split: {train_size} training, {val_size} validation")
+
+# Create weighted sampler for category-balanced training batches
+train_category_counts = {}
+for dataset_idx in train_indices:
+    _, _, category = full_dataset.samples[dataset_idx]
+    train_category_counts[category] = train_category_counts.get(category, 0) + 1
+
+sample_weights = []
+for dataset_idx in train_indices:
+    _, _, category = full_dataset.samples[dataset_idx]
+    sample_weights.append(1.0 / train_category_counts[category])
+
+weighted_sampler = WeightedRandomSampler(
+    weights=torch.tensor(sample_weights, dtype=torch.double),
+    num_samples=len(sample_weights),
+    replacement=True,
+)
 
 # Create dataloaders
 train_dataloader = DataLoader(
     train_dataset, 
     batch_size=config["batch_size"], 
-    shuffle=True,
+    sampler=weighted_sampler,
     num_workers=2,
     pin_memory=True
 )
@@ -310,12 +377,30 @@ def validate(unet, val_dataloader, vae, text_encoder, tokenizer, pipe, device):
     return sum(val_losses) / len(val_losses) if val_losses else float('inf')
 
 # 7. Training Loop 
-optimizer = torch.optim.AdamW(unet.parameters(), lr=config["learning_rate"])
+optimizer = torch.optim.AdamW(
+    unet.parameters(),
+    lr=config["learning_rate"],
+    weight_decay=config["weight_decay"],
+)
 
-# Learning rate scheduler with warmup
-from torch.optim.lr_scheduler import CosineAnnealingLR
-total_steps = len(train_dataloader) * config["epochs"] // config["gradient_accumulation_steps"]
-scheduler = CosineAnnealingLR(optimizer, T_max=total_steps, eta_min=1e-6)
+# Learning rate scheduler with linear warmup + cosine decay
+from torch.optim.lr_scheduler import LambdaLR
+updates_per_epoch = max(1, math.ceil(len(train_dataloader) / config["gradient_accumulation_steps"]))
+total_updates = updates_per_epoch * config["epochs"]
+warmup_updates = min(config["lr_warmup_steps"], max(1, total_updates // 5))
+
+
+def lr_lambda(current_update):
+    if current_update < warmup_updates:
+        return float(current_update + 1) / float(max(1, warmup_updates))
+
+    progress = float(current_update - warmup_updates) / float(max(1, total_updates - warmup_updates))
+    cosine = 0.5 * (1.0 + math.cos(math.pi * progress))
+    min_factor = config["lr_eta_min"] / config["learning_rate"]
+    return max(min_factor, cosine)
+
+
+scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
 
 unet.train()
 
@@ -339,6 +424,7 @@ logger.info("\n" + "="*50)
 print("\n" + "="*50)
 
 global_step = 0
+epochs_without_improvement = 0
 for epoch in range(config["epochs"]):
     epoch_losses = []
     progress_bar = tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{config['epochs']}")
@@ -388,6 +474,16 @@ for epoch in range(config["epochs"]):
             logger.error(f"\nError in training step: {e}")
             print(f"\nError in training step: {e}")
             continue
+
+    # Handle leftover gradients when steps are not divisible by accumulation
+    total_batches = len(epoch_losses)
+    if total_batches > 0 and (total_batches % config["gradient_accumulation_steps"] != 0):
+        torch.nn.utils.clip_grad_norm_(unet.parameters(), config["max_grad_norm"])
+        optimizer.step()
+        scheduler.step()
+        optimizer.zero_grad()
+        global_step += 1
+
     avg_train_loss = sum(epoch_losses) / len(epoch_losses) if epoch_losses else 0
     current_lr = optimizer.param_groups[0]['lr']
     
@@ -400,10 +496,11 @@ for epoch in range(config["epochs"]):
     print(f"Epoch {epoch+1} finished. Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f} | LR: {current_lr:.2e}")
     
     # Track best model based on validation loss
-    if avg_val_loss < training_log["best_val_loss"]:
+    if avg_val_loss < (training_log["best_val_loss"] - config["early_stop_min_delta"]):
         training_log["best_val_loss"] = avg_val_loss
         training_log["best_train_loss"] = avg_train_loss
         training_log["best_epoch"] = epoch + 1
+        epochs_without_improvement = 0
         logger.info(f"  ✓ New best validation loss! Saving best model...")
         print(f"  ✓ New best validation loss! Saving best model...")
         best_model_dir = os.path.join(config["output_dir"], "best_model")
@@ -416,15 +513,28 @@ for epoch in range(config["epochs"]):
         unet.save_pretrained(best_checkpoint_dir)
         logger.info(f"  ✓ Best model checkpoint saved to {best_checkpoint_dir}")
         print(f"  ✓ Best model checkpoint saved to {best_checkpoint_dir}")
+    else:
+        epochs_without_improvement += 1
     
-    # Early stopping check (if validation loss keeps increasing)
-    if len(training_log["epochs"]) >= config["early_stop_patience"]:
-        recent_val_losses = [e["val_loss"] for e in training_log["epochs"][-config["early_stop_patience"]:]]
-        if all(recent_val_losses[i] < recent_val_losses[i+1] for i in range(len(recent_val_losses)-1)):
-            logger.warning(f"\n⚠ WARNING: Validation loss has been increasing for {config['early_stop_patience']} epochs!")
-            print(f"\n⚠ WARNING: Validation loss has been increasing for {config['early_stop_patience']} epochs!")
-            logger.warning(f"  Consider stopping training. Best epoch was {training_log['best_epoch']} with val loss {training_log['best_val_loss']:.4f}")
-            print(f"  Consider stopping training. Best epoch was {training_log['best_epoch']} with val loss {training_log['best_val_loss']:.4f}")
+    # True early stopping on no meaningful improvement
+    if (epoch + 1) >= config["min_epochs_before_early_stop"] and epochs_without_improvement >= config["early_stop_patience"]:
+        logger.warning(
+            f"\n⚠ Early stopping triggered at epoch {epoch + 1}: "
+            f"no val-loss improvement > {config['early_stop_min_delta']} for {epochs_without_improvement} epochs."
+        )
+        print(
+            f"\n⚠ Early stopping triggered at epoch {epoch + 1}: "
+            f"no val-loss improvement > {config['early_stop_min_delta']} for {epochs_without_improvement} epochs."
+        )
+        logger.warning(
+            f"  Best epoch was {training_log['best_epoch']} with val loss {training_log['best_val_loss']:.4f}"
+        )
+        print(f"  Best epoch was {training_log['best_epoch']} with val loss {training_log['best_val_loss']:.4f}")
+
+        training_log["last_completed_epoch"] = epoch + 1
+        with open(os.path.join(config["output_dir"], "training_log.json"), "w") as f:
+            json.dump(training_log, f, indent=2)
+        break
     
     training_log["epochs"].append({
         "epoch": epoch + 1,
@@ -577,3 +687,6 @@ logger.info("All done! You can now run anomal_score.py to test the model.")
 print("All done! You can now run anomal_score.py to test the model.")
 logger.info("="*50)
 print("="*50)
+
+#  شغل
+# uv run python generate_synthetic_data.py --categories bottle capsule pill toothbrush --ratio 0.3 --strength 0.35
