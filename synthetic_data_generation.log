@@ -38,3 +38,32 @@
 2026-02-24 23:45:12,182 - INFO - Finished toothbrush: generated=0, attempts=144, rejected_blur=0, rejected_brightness=0, rejected_duplicate=144
 2026-02-24 23:45:12,182 - INFO - ================================================================
 2026-02-24 23:45:12,182 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260224_234512.json
+2026-02-25 11:58:22,647 - INFO - Detected category counts from train dir:
+2026-02-25 11:58:22,648 - INFO -   bottle: 209 real/total images
+2026-02-25 11:58:22,648 - INFO -   capsule: 219 real/total images
+2026-02-25 11:58:22,648 - INFO -   pill: 267 real/total images
+2026-02-25 11:58:22,648 - INFO -   toothbrush: 60 real/total images
+2026-02-25 11:58:22,648 - INFO - Loading Stable Diffusion Img2Img pipeline...
+2026-02-25 11:58:42,590 - INFO - ================================================================
+2026-02-25 11:58:42,590 - INFO - Category: bottle | real=209 | target_synthetic=63 | max_tries=504
+2026-02-25 12:07:44,892 - INFO - Finished bottle: generated=0, attempts=504, rejected_blur=0, rejected_brightness=0, rejected_duplicate=504
+2026-02-25 12:07:44,892 - INFO - ================================================================
+2026-02-25 12:07:44,893 - INFO - Category: capsule | real=219 | target_synthetic=66 | max_tries=528
+2026-02-25 12:17:16,979 - INFO - Finished capsule: generated=0, attempts=528, rejected_blur=0, rejected_brightness=0, rejected_duplicate=528
+2026-02-25 12:17:16,979 - INFO - ================================================================
+2026-02-25 12:17:16,979 - INFO - Category: pill | real=267 | target_synthetic=80 | max_tries=640
+2026-02-25 12:28:42,177 - INFO - Finished pill: generated=0, attempts=640, rejected_blur=0, rejected_brightness=0, rejected_duplicate=640
+2026-02-25 12:28:42,177 - INFO - ================================================================
+2026-02-25 12:28:42,177 - INFO - Category: toothbrush | real=60 | target_synthetic=18 | max_tries=144
+2026-02-25 12:31:18,051 - INFO - Finished toothbrush: generated=0, attempts=144, rejected_blur=0, rejected_brightness=0, rejected_duplicate=144
+2026-02-25 12:31:18,052 - INFO - ================================================================
+2026-02-25 12:31:18,052 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260225_123118.json
+2026-02-25 15:20:16,812 - INFO - Detected category counts from train dir:
+2026-02-25 15:20:16,813 - INFO -   toothbrush: 60 real/total images
+2026-02-25 15:20:16,813 - INFO - Loading Stable Diffusion Img2Img pipeline...
+2026-02-25 15:20:20,320 - WARNING - Offline load failed (CUDA out of memory. Tried to allocate 30.00 MiB. GPU 0 has a total capacity of 11.62 GiB of which 28.94 MiB is free. Process 1716 has 6.53 MiB memory in use. Process 46891 has 9.57 GiB memory in use. Including non-PyTorch memory, this process has 1.60 GiB memory in use. Of the allocated memory 1.44 GiB is allocated by PyTorch, and 60.64 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)), trying online mode...
+2026-02-25 15:20:20,771 - INFO - HTTP Request: GET https://huggingface.co/api/models/runwayml/stable-diffusion-v1-5 "HTTP/1.1 307 Temporary Redirect"
+2026-02-25 15:20:20,960 - INFO - HTTP Request: GET https://huggingface.co/api/models/stable-diffusion-v1-5/stable-diffusion-v1-5 "HTTP/1.1 200 OK"
+2026-02-25 15:20:21,139 - INFO - HTTP Request: HEAD https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/model_index.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-25 15:20:21,315 - INFO - HTTP Request: HEAD https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/model_index.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-25 15:20:21,392 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/stable-diffusion-v1-5/stable-diffusion-v1-5/451f4fe16113bff5a5d2269ed5ad43b0592e9a14/model_index.json "HTTP/1.1 200 OK"

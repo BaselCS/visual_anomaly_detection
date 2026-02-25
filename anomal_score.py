@@ -1,6 +1,8 @@
 import os
 import torch
 import numpy as np
+import random
+import hashlib
 from PIL import Image
 from diffusers import StableDiffusionImg2ImgPipeline
 from torch import nn
@@ -26,6 +28,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+EVAL_SEED = 42
+CALIBRATION_FRACTION = 0.3
+
+
+def set_seed(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
+def stable_int(text: str) -> int:
+    return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:12], 16)
+
 
 def resolve_latest_train_run(base_dir: str) -> str:
     """Return latest trainX directory if present, else return base_dir."""
@@ -46,17 +63,52 @@ def resolve_latest_train_run(base_dir: str) -> str:
     train_dirs.sort(key=lambda x: x[0], reverse=True)
     return train_dirs[0][1]
 
+
+def resolve_best_train_run(base_dir: str) -> str:
+    """Select trainX run with best validation loss when available, else latest run."""
+    if not os.path.exists(base_dir):
+        return base_dir
+
+    candidates = []
+    latest = resolve_latest_train_run(base_dir)
+
+    for name in os.listdir(base_dir):
+        full_path = os.path.join(base_dir, name)
+        if not (os.path.isdir(full_path) and name.startswith("train") and name[5:].isdigit()):
+            continue
+
+        log_path = os.path.join(full_path, "training_log.json")
+        best_model = os.path.join(full_path, "best_model")
+        if not (os.path.exists(log_path) and os.path.exists(best_model)):
+            continue
+
+        try:
+            with open(log_path, "r") as f:
+                train_log = json.load(f)
+            best_val_loss = float(train_log.get("best_val_loss", float("inf")))
+            run_num = int(name[5:])
+            candidates.append((best_val_loss, run_num, full_path))
+        except Exception:
+            continue
+
+    if not candidates:
+        return latest
+
+    candidates.sort(key=lambda x: (x[0], -x[1]))
+    return candidates[0][2]
+
 # 1. Auto-detect trained models
+set_seed(EVAL_SEED)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model_id = "runwayml/stable-diffusion-v1-5"
 trained_models_dir = "trained_models"
-run_models_dir = resolve_latest_train_run(trained_models_dir)
+run_models_dir = resolve_best_train_run(trained_models_dir)
 
 logger.info("Detecting trained models...")
 print("Detecting trained models...")
 if run_models_dir != trained_models_dir:
-    logger.info(f"Detected latest training run: {run_models_dir}")
-    print(f"Detected latest training run: {run_models_dir}")
+    logger.info(f"Detected selected training run: {run_models_dir}")
+    print(f"Detected selected training run: {run_models_dir}")
 else:
     logger.info(f"Using legacy model directory: {run_models_dir}")
     print(f"Using legacy model directory: {run_models_dir}")
@@ -142,8 +194,7 @@ def calculate_anomaly_score(original_image, reconstructed_image):
 
 # 3. Process Test Images (معالجة صور الاختبار)
 all_results = {}
-all_scores = []
-all_labels = []  # 0 for good, 1 for defect
+all_records = []
 
 output_dir = "anomaly_detection_results"
 os.makedirs(output_dir, exist_ok=True)
@@ -156,26 +207,39 @@ pipeline_cache = {}
 
 
 def get_or_create_pipeline(model_path: str):
+    global device
+
     if model_path in pipeline_cache:
         return pipeline_cache[model_path]
 
     logger.info("Loading base model...")
     print("Loading base model...")
 
-    try:
+    def load_pipe(target_device: str):
         pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
             model_id,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float16 if target_device == "cuda" else torch.float32,
             safety_checker=None,
             requires_safety_checker=False,
             local_files_only=True,
-        ).to(device)
+        ).to(target_device)
+        return pipe
+
+    try:
+        pipe = load_pipe(device)
     except Exception as e:
-        raise RuntimeError(
-            "Could not load Stable Diffusion model from local cache. "
-            "Run 'uv run python download_model.py' once, then retry anomaly scoring. "
-            f"Original error: {e}"
-        )
+        is_oom = "out of memory" in str(e).lower()
+        if device == "cuda" and is_oom:
+            logger.warning(f"GPU OOM while loading scoring pipeline ({e}). Falling back to CPU.")
+            torch.cuda.empty_cache()
+            device = "cpu"
+            pipe = load_pipe(device)
+        else:
+            raise RuntimeError(
+                "Could not load Stable Diffusion model from local cache. "
+                "Run 'uv run python download_model.py' once, then retry anomaly scoring. "
+                f"Original error: {e}"
+            )
 
     # Attach LoRA once for this model path
     pipe.unet = PeftModel.from_pretrained(pipe.unet, model_path)
@@ -248,12 +312,16 @@ for category, model_path in available_models.items():
                 
                 # ب. إعادة البناء (Reconstruction)
                 prompt = f"a high quality photo of a perfect {category}"
+                image_seed = EVAL_SEED + (stable_int(f"{category}/{img_name}") % 1_000_000)
+                generator = torch.Generator(device=device)
+                generator.manual_seed(image_seed)
                 reconstructed_image = pipe(
                     prompt=prompt, 
                     image=original_image, 
                     strength=0.4,  # REDUCED to preserve more structure and defects
                     guidance_scale=6.5,  # Slightly reduced for less aggressive reconstruction
-                    num_inference_steps=30
+                    num_inference_steps=30,
+                    generator=generator,
                 ).images[0]
                 
               
@@ -261,8 +329,15 @@ for category, model_path in available_models.items():
                 
                 # Store results
                 label = 0 if defect_type == "good" else 1
-                all_scores.append(score)
-                all_labels.append(label)
+                all_records.append(
+                    {
+                        "category": category,
+                        "image": img_name,
+                        "type": defect_type,
+                        "label": label,
+                        "score": float(score),
+                    }
+                )
                 
                 key = f"{category}/{defect_type}/{img_name}"
                 category_results[key] = {
@@ -289,29 +364,114 @@ print("\n" + "="*50)
 logger.info("\n📊 Calculating automatic threshold and metrics...")
 print("\n📊 Calculating automatic threshold and metrics...")
 
-# Calculate optimal threshold using ROC curve
-if len(set(all_labels)) > 1:  # Make sure we have both classes
-    fpr, tpr, thresholds = roc_curve(all_labels, all_scores)
-    
-    # Find optimal threshold (Youden's J statistic)
+by_category_records = {}
+for record in all_records:
+    by_category_records.setdefault(record["category"], []).append(record)
+
+
+def split_calibration_eval(records, category):
+    good = [r for r in records if r["label"] == 0]
+    defect = [r for r in records if r["label"] == 1]
+
+    rng = random.Random(EVAL_SEED + (stable_int(category) % 100000))
+    rng.shuffle(good)
+    rng.shuffle(defect)
+
+    if min(len(good), len(defect)) < 2:
+        return records, records, "fallback_insufficient_samples"
+
+    good_calib = max(1, int(round(len(good) * CALIBRATION_FRACTION)))
+    defect_calib = max(1, int(round(len(defect) * CALIBRATION_FRACTION)))
+
+    good_calib = min(good_calib, len(good) - 1)
+    defect_calib = min(defect_calib, len(defect) - 1)
+
+    calib = good[:good_calib] + defect[:defect_calib]
+    evaluation = good[good_calib:] + defect[defect_calib:]
+    return calib, evaluation, None
+
+
+def youden_threshold(labels, oriented_scores):
+    fpr, tpr, thresholds = roc_curve(labels, oriented_scores)
     j_scores = tpr - fpr
-    optimal_idx = np.argmax(j_scores)
-    optimal_threshold = thresholds[optimal_idx]
-    
-    # Calculate AUC-ROC
-    auc_score = roc_auc_score(all_labels, all_scores)
-    
-    logger.info(f"\n✓ Optimal Threshold: {optimal_threshold:.4f}")
-    print(f"\n✓ Optimal Threshold: {optimal_threshold:.4f}")
-    logger.info(f"✓ AUC-ROC Score: {auc_score:.4f}")
-    print(f"✓ AUC-ROC Score: {auc_score:.4f}")
-    
-    # Plot ROC curve
+    idx = int(np.argmax(j_scores))
+    return thresholds[idx], fpr, tpr, idx
+
+
+per_category_thresholds = {}
+eval_labels = []
+eval_oriented_scores = []
+eval_predictions = []
+
+calibration_direction_summary = {}
+for category, records in by_category_records.items():
+    calib_records, eval_records, split_note = split_calibration_eval(records, category)
+    calib_labels = [r["label"] for r in calib_records]
+    calib_scores = [r["score"] for r in calib_records]
+
+    if len(set(calib_labels)) <= 1:
+        logger.warning(f"Category {category}: missing both classes in calibration, using median fallback")
+        direction = "higher_is_defect"
+        threshold = float(np.median(calib_scores)) if calib_scores else 0.0
+        calib_auc = None
+    else:
+        auc_direct = roc_auc_score(calib_labels, calib_scores)
+        auc_inverted = roc_auc_score(calib_labels, [-s for s in calib_scores])
+
+        if auc_inverted > auc_direct:
+            direction = "lower_is_defect"
+            oriented_calib_scores = [-s for s in calib_scores]
+            calib_auc = auc_inverted
+        else:
+            direction = "higher_is_defect"
+            oriented_calib_scores = calib_scores
+            calib_auc = auc_direct
+
+        threshold, _, _, _ = youden_threshold(calib_labels, oriented_calib_scores)
+
+    calibration_direction_summary[category] = {
+        "direction": direction,
+        "calibration_auc": float(calib_auc) if calib_auc is not None else None,
+        "split_note": split_note,
+        "calibration_count": len(calib_records),
+        "evaluation_count": len(eval_records),
+    }
+    per_category_thresholds[category] = float(threshold)
+
+    for record in eval_records:
+        score = record["score"]
+        oriented_score = -score if direction == "lower_is_defect" else score
+        pred = 1 if oriented_score > threshold else 0
+
+        eval_labels.append(record["label"])
+        eval_oriented_scores.append(oriented_score)
+        eval_predictions.append(pred)
+
+overall_threshold_proxy = float(np.mean(list(per_category_thresholds.values()))) if per_category_thresholds else 0.0
+optimal_threshold = overall_threshold_proxy
+
+if len(eval_labels) > 0 and len(set(eval_labels)) > 1:
+    auc_score = roc_auc_score(eval_labels, eval_oriented_scores)
+    fpr, tpr, thresholds = roc_curve(eval_labels, eval_oriented_scores)
+    j_scores = tpr - fpr
+    optimal_idx = int(np.argmax(j_scores))
+
+    logger.info(f"\n✓ Proxy Threshold (mean of per-category thresholds): {optimal_threshold:.4f}")
+    print(f"\n✓ Proxy Threshold (mean of per-category thresholds): {optimal_threshold:.4f}")
+    logger.info(f"✓ AUC-ROC Score (evaluation split): {auc_score:.4f}")
+    print(f"✓ AUC-ROC Score (evaluation split): {auc_score:.4f}")
+
     plt.figure(figsize=(10, 6))
     plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {auc_score:.3f})', linewidth=2)
     plt.plot([0, 1], [0, 1], 'k--', label='Random Classifier')
-    plt.scatter(fpr[optimal_idx], tpr[optimal_idx], c='red', s=100, 
-                label=f'Optimal Threshold = {optimal_threshold:.4f}', zorder=5)
+    plt.scatter(
+        fpr[optimal_idx],
+        tpr[optimal_idx],
+        c='red',
+        s=100,
+        label='Best eval-split operating point',
+        zorder=5,
+    )
     plt.xlabel('False Positive Rate', fontsize=12)
     plt.ylabel('True Positive Rate', fontsize=12)
     plt.title('ROC Curve - Anomaly Detection Performance', fontsize=14, fontweight='bold')
@@ -321,35 +481,38 @@ if len(set(all_labels)) > 1:  # Make sure we have both classes
     plt.savefig(os.path.join(output_dir, 'roc_curve.png'), dpi=150)
     logger.info(f"✓ ROC curve saved to {output_dir}/roc_curve.png")
     print(f"✓ ROC curve saved to {output_dir}/roc_curve.png")
-    
-    # Calculate confusion matrix metrics
-    predictions = [1 if score > optimal_threshold else 0 for score in all_scores]
-    tp = sum([1 for i in range(len(all_labels)) if all_labels[i] == 1 and predictions[i] == 1])
-    tn = sum([1 for i in range(len(all_labels)) if all_labels[i] == 0 and predictions[i] == 0])
-    fp = sum([1 for i in range(len(all_labels)) if all_labels[i] == 0 and predictions[i] == 1])
-    fn = sum([1 for i in range(len(all_labels)) if all_labels[i] == 1 and predictions[i] == 0])
-    
-    accuracy = (tp + tn) / len(all_labels) if len(all_labels) > 0 else 0
+
+    tp = sum(1 for y, p in zip(eval_labels, eval_predictions) if y == 1 and p == 1)
+    tn = sum(1 for y, p in zip(eval_labels, eval_predictions) if y == 0 and p == 0)
+    fp = sum(1 for y, p in zip(eval_labels, eval_predictions) if y == 0 and p == 1)
+    fn = sum(1 for y, p in zip(eval_labels, eval_predictions) if y == 1 and p == 0)
+
+    accuracy = (tp + tn) / len(eval_labels) if len(eval_labels) > 0 else 0
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0
     f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
-    
-    logger.info(f"\n📈 Performance Metrics:")
-    print(f"\n📈 Performance Metrics:")
-    logger.info(f"  Accuracy:  {accuracy:.4f} ({accuracy*100:.2f}%)")
-    print(f"  Accuracy:  {accuracy:.4f} ({accuracy*100:.2f}%)")
-    logger.info(f"  Precision: {precision:.4f}")
-    print(f"  Precision: {precision:.4f}")
-    logger.info(f"  Recall:    {recall:.4f}")
-    print(f"  Recall:    {recall:.4f}")
-    logger.info(f"  F1-Score:  {f1:.4f}")
-    print(f"  F1-Score:  {f1:.4f}")
+    tpr_val = recall
+    tnr_val = tn / (tn + fp) if (tn + fp) > 0 else 0
+    balanced_accuracy = 0.5 * (tpr_val + tnr_val)
+
+    logger.info(f"\n📈 Performance Metrics (evaluation split):")
+    print(f"\n📈 Performance Metrics (evaluation split):")
+    logger.info(f"  Accuracy:          {accuracy:.4f} ({accuracy*100:.2f}%)")
+    print(f"  Accuracy:          {accuracy:.4f} ({accuracy*100:.2f}%)")
+    logger.info(f"  Balanced Accuracy: {balanced_accuracy:.4f}")
+    print(f"  Balanced Accuracy: {balanced_accuracy:.4f}")
+    logger.info(f"  Precision:         {precision:.4f}")
+    print(f"  Precision:         {precision:.4f}")
+    logger.info(f"  Recall:            {recall:.4f}")
+    print(f"  Recall:            {recall:.4f}")
+    logger.info(f"  F1-Score:          {f1:.4f}")
+    print(f"  F1-Score:          {f1:.4f}")
 else:
-    logger.warning("Warning: Not enough data for threshold calculation")
-    print("Warning: Not enough data for threshold calculation")
-    optimal_threshold = np.median(all_scores)
+    logger.warning("Warning: Not enough data for evaluation metrics")
+    print("Warning: Not enough data for evaluation metrics")
     auc_score = None
     accuracy = None
+    balanced_accuracy = None
     precision = None
     recall = None
     f1 = None
@@ -385,10 +548,15 @@ current_run_data = {
     "run_directory": run_models_dir,
     "model_type": model_type,
     "model_path": model_path,
+    "evaluation_seed": EVAL_SEED,
+    "calibration_fraction": CALIBRATION_FRACTION,
+    "per_category_thresholds": per_category_thresholds,
+    "calibration_summary": calibration_direction_summary,
     "optimal_threshold": float(optimal_threshold) if optimal_threshold is not None else None,
     "metrics": {
         "auc_roc": float(auc_score) if auc_score is not None else None,
         "accuracy": float(accuracy) if accuracy is not None else None,
+        "balanced_accuracy": float(balanced_accuracy) if balanced_accuracy is not None else None,
         "precision": float(precision) if precision is not None else None,
         "recall": float(recall) if recall is not None else None,
         "f1_score": float(f1) if f1 is not None else None
@@ -512,12 +680,14 @@ print("\n" + "="*50)
 if auc_score is not None:
     print(f"\nFinal Assessment:")
     logger.info(f"\nFinal Assessment:")
-    logger.info(f"  AUC-ROC Score: {auc_score:.4f}")
-    print(f"  AUC-ROC Score: {auc_score:.4f}")
-    logger.info(f"  Optimal Threshold: {optimal_threshold:.4f}")
-    print(f"  Optimal Threshold: {optimal_threshold:.4f}")
+    logger.info(f"  AUC-ROC Score (evaluation split): {auc_score:.4f}")
+    print(f"  AUC-ROC Score (evaluation split): {auc_score:.4f}")
+    logger.info(f"  Proxy Threshold (mean per-category): {optimal_threshold:.4f}")
+    print(f"  Proxy Threshold (mean per-category): {optimal_threshold:.4f}")
     logger.info(f"  Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
     print(f"  Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
+    logger.info(f"  Balanced Accuracy: {balanced_accuracy:.4f}")
+    print(f"  Balanced Accuracy: {balanced_accuracy:.4f}")
     logger.info(f"  Precision: {precision:.4f}")
     print(f"  Precision: {precision:.4f}")
     logger.info(f"  Recall: {recall:.4f}")

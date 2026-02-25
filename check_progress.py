@@ -7,6 +7,24 @@ import json
 import os
 from datetime import datetime
 
+
+def resolve_latest_training_log(base_dir="trained_models"):
+    """Return training_log.json path from latest trainX run if available."""
+    if not os.path.isdir(base_dir):
+        return os.path.join(base_dir, "training_log.json")
+
+    train_dirs = []
+    for name in os.listdir(base_dir):
+        full_path = os.path.join(base_dir, name)
+        if os.path.isdir(full_path) and name.startswith("train") and name[5:].isdigit():
+            train_dirs.append((int(name[5:]), full_path))
+
+    if not train_dirs:
+        return os.path.join(base_dir, "training_log.json")
+
+    train_dirs.sort(key=lambda x: x[0], reverse=True)
+    return os.path.join(train_dirs[0][1], "training_log.json")
+
 def format_duration(seconds):
     """Format seconds into human readable duration"""
     hours = int(seconds // 3600)
@@ -14,7 +32,7 @@ def format_duration(seconds):
     return f"{hours}h {minutes}m"
 
 def check_progress():
-    log_file = "trained_models/training_log.json"
+    log_file = resolve_latest_training_log()
     
     print("="*60)
     print("Training Progress Check")
@@ -54,7 +72,8 @@ def check_progress():
         print(f"📊 Progress: Epoch {current_epoch}/{total_epochs} ({progress_pct:.1f}%)")
         print(f"⏱️  Running time: {format_duration(elapsed)}")
         print(f"⏳ Estimated remaining: {format_duration(est_remaining)}")
-        print(f"🎯 Expected completion: {(current_time.timestamp() + est_remaining)}")
+        eta = datetime.fromtimestamp(current_time.timestamp() + est_remaining)
+        print(f"🎯 Expected completion: {eta.strftime('%Y-%m-%d %H:%M:%S')}")
         print()
         print(f"📉 Current Training Loss: {latest['train_loss']:.4f}")
         print(f"📉 Current Validation Loss: {latest['val_loss']:.4f}")

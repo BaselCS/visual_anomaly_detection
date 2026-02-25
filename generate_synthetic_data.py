@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import random
+import hashlib
 from datetime import datetime
 from typing import Dict, List, Tuple
 
@@ -33,6 +34,10 @@ CATEGORY_PROMPTS = {
     "toothbrush": "a high quality studio photo of an intact toothbrush, same handle shape and bristle structure, plain background",
 }
 NEGATIVE_PROMPT = "defect, broken, crack, damaged, blur, text, logo, watermark, extra object, deformed, unrealistic"
+
+
+def stable_int(text: str) -> int:
+    return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:12], 16)
 
 
 def parse_args() -> argparse.Namespace:
@@ -111,6 +116,18 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=42,
         help="Random seed",
+    )
+    parser.add_argument(
+        "--hash-size",
+        type=int,
+        default=16,
+        help="Perceptual hash size used for duplicate checking (higher = stricter detail)",
+    )
+    parser.add_argument(
+        "--duplicate-threshold",
+        type=int,
+        default=0,
+        help="Max Hamming distance to treat as duplicate (0 = exact hash match only)",
     )
     return parser.parse_args()
 
@@ -202,7 +219,12 @@ def collect_category_training_images(train_dir: str, categories: List[str]) -> D
     return category_images
 
 
-def preload_existing_hashes(train_dir: str, categories: List[str], category_hashes: Dict[str, set]) -> None
+def preload_existing_hashes(
+    train_dir: str,
+    categories: List[str],
+    category_hashes: Dict[str, set],
+    hash_size: int,
+) -> None:
     for filename in os.listdir(train_dir):
         category, _ = extract_category_and_index(filename)
         if category is None or category not in categories:
@@ -211,7 +233,7 @@ def preload_existing_hashes(train_dir: str, categories: List[str], category_hash
         img_path = os.path.join(train_dir, filename)
         try:
             with Image.open(img_path).convert("RGB") as img:
-                category_hashes[category].add(average_hash(img))
+                category_hashes[category].add(average_hash(img, hash_size=hash_size))
         except Exception as exc:
             logger.warning(f"Failed to hash existing image {img_path}: {exc}")
 
@@ -245,26 +267,39 @@ def main() -> None:
     logger.info("Loading Stable Diffusion Img2Img pipeline...")
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    def load_pipe(target_device: str, local_only: bool):
+        pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+            MODEL_ID,
+            torch_dtype=torch.float16 if target_device == "cuda" else torch.float32,
+            safety_checker=None,
+            requires_safety_checker=False,
+            local_files_only=local_only,
+        ).to(target_device)
+        pipe.enable_attention_slicing()
+        pipe.enable_vae_slicing()
+        return pipe
+
     try:
-        pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
-            MODEL_ID,
-            torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-            safety_checker=None,
-            requires_safety_checker=False,
-            local_files_only=True,
-        ).to(device)
+        pipe = load_pipe(device, local_only=True)
     except Exception as exc:
-        logger.warning(f"Offline load failed ({exc}), trying online mode...")
-        pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
-            MODEL_ID,
-            torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-            safety_checker=None,
-            requires_safety_checker=False,
-        ).to(device)
+        is_oom = "out of memory" in str(exc).lower()
+        if device == "cuda" and is_oom:
+            logger.warning(f"GPU OOM while loading pipeline ({exc}). Falling back to CPU generation.")
+            torch.cuda.empty_cache()
+            device = "cpu"
+            pipe = load_pipe(device, local_only=True)
+        else:
+            logger.warning(f"Offline load failed ({exc}), trying online mode...")
+            pipe = load_pipe(device, local_only=False)
 
     category_training_images = collect_category_training_images(args.train_dir, categories)
 
-    preload_existing_hashes(args.train_dir, categories, category_hashes)
+    preload_existing_hashes(
+        args.train_dir,
+        categories,
+        category_hashes,
+        hash_size=args.hash_size,
+    )
 
     run_summary = {
         "timestamp": datetime.now().isoformat(),
@@ -316,7 +351,7 @@ def main() -> None:
             prompt = build_prompt(category)
 
             generator = torch.Generator(device=device)
-            generator.manual_seed(args.seed + attempted + (hash(category) % 10000))
+            generator.manual_seed(args.seed + attempted + (stable_int(category) % 10000))
 
             source_image_path = random.choice(source_images)
             try:
@@ -350,10 +385,11 @@ def main() -> None:
                 rejected_brightness += 1
                 continue
 
-            candidate_hash = average_hash(image)
+            candidate_hash = average_hash(image, hash_size=args.hash_size)
             existing_hashes = category_hashes.setdefault(category, set())
             is_duplicate = any(
-                hamming_distance(candidate_hash, known_hash) <= 8 for known_hash in existing_hashes
+                hamming_distance(candidate_hash, known_hash) <= args.duplicate_threshold
+                for known_hash in existing_hashes
             )
             if is_duplicate:
                 rejected_duplicate += 1
