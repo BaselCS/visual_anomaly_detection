@@ -30,6 +30,9 @@ logger = logging.getLogger(__name__)
 
 EVAL_SEED = 42
 CALIBRATION_FRACTION = 0.3
+RECONSTRUCTION_STRENGTH = 0.25
+RECONSTRUCTION_GUIDANCE_SCALE = 6.5
+RECONSTRUCTION_STEPS = 30
 
 
 def set_seed(seed: int) -> None:
@@ -182,13 +185,35 @@ def calculate_anomaly_score(original_image, reconstructed_image):
     l1_diff = np.abs(org_np - rec_np)
     l2_diff = (org_np - rec_np) ** 2
     
+    # Global SSIM-style structural similarity (lightweight, no external deps)
+    org_gray = np.mean(org_np, axis=2)
+    rec_gray = np.mean(rec_np, axis=2)
+    mu_x = float(np.mean(org_gray))
+    mu_y = float(np.mean(rec_gray))
+    sigma_x = float(np.var(org_gray))
+    sigma_y = float(np.var(rec_gray))
+    sigma_xy = float(np.mean((org_gray - mu_x) * (rec_gray - mu_y)))
+
+    c1 = (0.01 ** 2)
+    c2 = (0.03 ** 2)
+    ssim_num = (2 * mu_x * mu_y + c1) * (2 * sigma_xy + c2)
+    ssim_den = (mu_x ** 2 + mu_y ** 2 + c1) * (sigma_x + sigma_y + c2)
+    ssim = ssim_num / ssim_den if ssim_den != 0 else 0.0
+    ssim = float(np.clip(ssim, 0.0, 1.0))
+
     # Aggregate scores
     l1_score = np.mean(l1_diff)
     l2_score = np.mean(l2_diff)
     max_diff = np.max(l1_diff)
+    ssim_distance = 1.0 - ssim
     
     # Combine scores (weighted average)
-    combined_score = 0.6 * l1_score + 0.3 * l2_score + 0.1 * max_diff
+    combined_score = (
+        0.45 * l1_score
+        + 0.25 * l2_score
+        + 0.10 * max_diff
+        + 0.20 * ssim_distance
+    )
     
     return combined_score, l1_diff
 
@@ -318,9 +343,9 @@ for category, model_path in available_models.items():
                 reconstructed_image = pipe(
                     prompt=prompt, 
                     image=original_image, 
-                    strength=0.4,  # REDUCED to preserve more structure and defects
-                    guidance_scale=6.5,  # Slightly reduced for less aggressive reconstruction
-                    num_inference_steps=30,
+                    strength=RECONSTRUCTION_STRENGTH,
+                    guidance_scale=RECONSTRUCTION_GUIDANCE_SCALE,
+                    num_inference_steps=RECONSTRUCTION_STEPS,
                     generator=generator,
                 ).images[0]
                 

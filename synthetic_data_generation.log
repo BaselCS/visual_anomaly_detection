@@ -67,3 +67,95 @@
 2026-02-25 15:20:21,139 - INFO - HTTP Request: HEAD https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/model_index.json "HTTP/1.1 307 Temporary Redirect"
 2026-02-25 15:20:21,315 - INFO - HTTP Request: HEAD https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/model_index.json "HTTP/1.1 307 Temporary Redirect"
 2026-02-25 15:20:21,392 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/stable-diffusion-v1-5/stable-diffusion-v1-5/451f4fe16113bff5a5d2269ed5ad43b0592e9a14/model_index.json "HTTP/1.1 200 OK"
+2026-02-25 16:03:20,760 - INFO - Detected category counts from train dir:
+2026-02-25 16:03:20,761 - INFO -   toothbrush: 60 real/total images
+2026-02-25 16:03:20,761 - INFO - Using realism-first augmentation mode (no diffusion model loading).
+2026-02-25 16:03:22,613 - INFO - ================================================================
+2026-02-25 16:03:22,614 - INFO - Category: toothbrush | real=60 | target_synthetic=1 | max_tries=11
+2026-02-25 16:03:22,767 - INFO - Finished toothbrush: generated=1, attempts=1, rejected_blur=0, rejected_brightness=0, rejected_duplicate=0
+2026-02-25 16:03:22,767 - INFO - ================================================================
+2026-02-25 16:03:22,767 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260225_160322.json
+2026-02-25 16:08:26,054 - INFO - Detected category counts from train dir:
+2026-02-25 16:08:26,055 - INFO -   toothbrush: 61 real/total images
+2026-02-25 16:08:26,055 - INFO - Using realism-first augmentation mode (no diffusion model loading).
+2026-02-25 16:08:27,890 - INFO - ================================================================
+2026-02-25 16:08:27,890 - INFO - Category: toothbrush | real=61 | target_synthetic=1 | max_tries=11
+2026-02-25 16:08:28,109 - INFO - Finished toothbrush: generated=1, attempts=2, rejected_blur=0, rejected_brightness=0, rejected_duplicate=1
+2026-02-25 16:08:28,109 - INFO - ================================================================
+2026-02-25 16:08:28,109 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260225_160828.json
+2026-02-25 16:08:56,930 - INFO - Detected category counts from train dir:
+2026-02-25 16:08:56,931 - INFO -   toothbrush: 62 real/total images
+2026-02-25 16:08:56,931 - INFO - Using realism-first augmentation mode (no diffusion model loading).
+2026-02-25 16:08:58,741 - INFO - ================================================================
+2026-02-25 16:08:58,741 - INFO - Category: toothbrush | real=62 | target_synthetic=1 | max_tries=11
+2026-02-25 16:08:59,011 - INFO - Finished toothbrush: generated=1, attempts=3, rejected_blur=0, rejected_brightness=0, rejected_duplicate=2
+2026-02-25 16:08:59,011 - INFO - ================================================================
+2026-02-25 16:08:59,011 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260225_160859.json
+2026-02-25 16:09:07,957 - INFO - Detected category counts from train dir:
+2026-02-25 16:09:07,958 - INFO -   toothbrush: 63 real/total images
+2026-02-25 16:09:07,958 - INFO - Using realism-first augmentation mode (no diffusion model loading).
+2026-02-25 16:09:09,770 - INFO - ================================================================
+2026-02-25 16:09:09,770 - INFO - Category: toothbrush | real=63 | target_synthetic=1 | max_tries=11
+2026-02-25 16:09:10,055 - INFO - Finished toothbrush: generated=1, attempts=4, rejected_blur=0, rejected_brightness=0, rejected_duplicate=3
+2026-02-25 16:09:10,055 - INFO - ================================================================
+2026-02-25 16:09:10,055 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260225_160910.json
+2026-02-25 20:17:03,255 - INFO - Detected category counts from train dir:
+2026-02-25 20:17:03,255 - INFO -   bottle: 209 real/total images
+2026-02-25 20:17:03,255 - INFO -   capsule: 219 real/total images
+2026-02-25 20:17:03,255 - INFO -   pill: 267 real/total images
+2026-02-25 20:17:03,255 - INFO -   toothbrush: 64 real/total images
+2026-02-25 20:17:03,256 - INFO - Using realism-first augmentation mode (no diffusion model loading).
+2026-02-25 20:17:20,077 - INFO - ================================================================
+2026-02-25 20:17:20,077 - INFO - Category: bottle | real=209 | target_synthetic=63 | max_tries=504
+2026-02-25 20:17:27,466 - INFO - Finished bottle: generated=63, attempts=66, rejected_blur=0, rejected_brightness=0, rejected_duplicate=3
+2026-02-25 20:17:27,466 - INFO - ================================================================
+2026-02-25 20:17:27,466 - INFO - Category: capsule | real=219 | target_synthetic=66 | max_tries=528
+2026-02-25 20:17:40,650 - INFO - Finished capsule: generated=66, attempts=74, rejected_blur=0, rejected_brightness=0, rejected_duplicate=8
+2026-02-25 20:17:40,651 - INFO - ================================================================
+2026-02-25 20:17:40,651 - INFO - Category: pill | real=267 | target_synthetic=80 | max_tries=640
+2026-02-25 20:17:55,560 - INFO - Finished pill: generated=80, attempts=120, rejected_blur=0, rejected_brightness=0, rejected_duplicate=40
+2026-02-25 20:17:55,561 - INFO - ================================================================
+2026-02-25 20:17:55,561 - INFO - Category: toothbrush | real=64 | target_synthetic=19 | max_tries=152
+2026-02-25 20:17:58,625 - INFO - Finished toothbrush: generated=19, attempts=20, rejected_blur=0, rejected_brightness=0, rejected_duplicate=1
+2026-02-25 20:17:58,627 - INFO - ================================================================
+2026-02-25 20:17:58,627 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260225_201758.json
+2026-02-26 00:24:09,876 - INFO - Detected category counts from train dir:
+2026-02-26 00:24:09,876 - INFO -   bottle: 272 real/total images
+2026-02-26 00:24:09,877 - INFO -   capsule: 285 real/total images
+2026-02-26 00:24:09,877 - INFO -   pill: 347 real/total images
+2026-02-26 00:24:09,877 - INFO -   toothbrush: 83 real/total images
+2026-02-26 00:24:09,877 - INFO - Using realism-first augmentation mode (no diffusion model loading).
+2026-02-26 00:24:28,998 - INFO - ================================================================
+2026-02-26 00:24:28,998 - INFO - Category: bottle | real=272 | target_synthetic=82 | max_tries=656
+2026-02-26 00:24:39,915 - INFO - Finished bottle: generated=82, attempts=82, rejected_blur=0, rejected_brightness=0, rejected_duplicate=0
+2026-02-26 00:24:39,915 - INFO - ================================================================
+2026-02-26 00:24:39,915 - INFO - Category: capsule | real=285 | target_synthetic=86 | max_tries=688
+2026-02-26 00:24:53,586 - INFO - Finished capsule: generated=86, attempts=96, rejected_blur=0, rejected_brightness=0, rejected_duplicate=10
+2026-02-26 00:24:53,587 - INFO - ================================================================
+2026-02-26 00:24:53,587 - INFO - Category: pill | real=347 | target_synthetic=104 | max_tries=832
+2026-02-26 00:25:10,630 - INFO - Finished pill: generated=104, attempts=125, rejected_blur=0, rejected_brightness=0, rejected_duplicate=21
+2026-02-26 00:25:10,630 - INFO - ================================================================
+2026-02-26 00:25:10,630 - INFO - Category: toothbrush | real=83 | target_synthetic=25 | max_tries=200
+2026-02-26 00:25:14,169 - INFO - Finished toothbrush: generated=25, attempts=25, rejected_blur=0, rejected_brightness=0, rejected_duplicate=0
+2026-02-26 00:25:14,171 - INFO - ================================================================
+2026-02-26 00:25:14,171 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260226_002514.json
+2026-02-26 11:21:03,668 - INFO - Detected category counts from train dir:
+2026-02-26 11:21:03,668 - INFO -   bottle: 354 real/total images
+2026-02-26 11:21:03,669 - INFO -   capsule: 371 real/total images
+2026-02-26 11:21:03,669 - INFO -   pill: 451 real/total images
+2026-02-26 11:21:03,669 - INFO -   toothbrush: 108 real/total images
+2026-02-26 11:21:03,669 - INFO - Using realism-first augmentation mode (no diffusion model loading).
+2026-02-26 11:21:23,849 - INFO - ================================================================
+2026-02-26 11:21:23,849 - INFO - Category: bottle | real=354 | target_synthetic=106 | max_tries=848
+2026-02-26 11:21:36,738 - INFO - Finished bottle: generated=106, attempts=106, rejected_blur=0, rejected_brightness=0, rejected_duplicate=0
+2026-02-26 11:21:36,738 - INFO - ================================================================
+2026-02-26 11:21:36,738 - INFO - Category: capsule | real=371 | target_synthetic=111 | max_tries=888
+2026-02-26 11:21:52,945 - INFO - Finished capsule: generated=111, attempts=127, rejected_blur=0, rejected_brightness=0, rejected_duplicate=16
+2026-02-26 11:21:52,946 - INFO - ================================================================
+2026-02-26 11:21:52,946 - INFO - Category: pill | real=451 | target_synthetic=120 | max_tries=960
+2026-02-26 11:22:09,469 - INFO - Finished pill: generated=120, attempts=134, rejected_blur=0, rejected_brightness=0, rejected_duplicate=14
+2026-02-26 11:22:09,469 - INFO - ================================================================
+2026-02-26 11:22:09,469 - INFO - Category: toothbrush | real=108 | target_synthetic=32 | max_tries=256
+2026-02-26 11:22:13,489 - INFO - Finished toothbrush: generated=32, attempts=33, rejected_blur=0, rejected_brightness=0, rejected_duplicate=1
+2026-02-26 11:22:13,491 - INFO - ================================================================
+2026-02-26 11:22:13,491 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260226_112213.json

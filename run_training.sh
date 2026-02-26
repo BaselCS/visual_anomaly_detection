@@ -7,6 +7,7 @@ set -euo pipefail
 LOGFILE="training_output.log"
 
 # Best-known generation settings from past successful run (2026-02-24).
+GEN_METHOD="augment"
 GEN_RATIO="0.3"
 GEN_MAX_PER_CATEGORY="120"
 GEN_MIN_BLUR="8.0"
@@ -16,6 +17,7 @@ GEN_NUM_STEPS="30"
 GEN_GUIDANCE_SCALE="7.0"
 GEN_STRENGTH="0.22"
 GEN_SEED="42"
+GEN_ENV_STRENGTH="0.7"
 
 echo "==========================================" | tee -a "$LOGFILE"
 echo "Visual Anomaly Detection Full Pipeline" | tee -a "$LOGFILE"
@@ -42,6 +44,9 @@ echo "" | tee -a "$LOGFILE"
 
 echo "[1/3] Generating synthetic normal images..." | tee -a "$LOGFILE"
 uv run python -u generate_synthetic_data.py \
+    --generation-method "$GEN_METHOD" \
+    --randomize-environment \
+    --environment-strength "$GEN_ENV_STRENGTH" \
     --ratio "$GEN_RATIO" \
     --max-per-category "$GEN_MAX_PER_CATEGORY" \
     --min-blur-score "$GEN_MIN_BLUR" \
