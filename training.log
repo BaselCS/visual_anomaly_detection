@@ -1,0 +1,333 @@
+2026-02-28 16:43:30,726 - INFO - Training Configuration:
+2026-02-28 16:43:30,726 - INFO - Training Configuration:
+2026-02-28 16:43:30,726 - INFO -   categories: ['bottle', 'capsule', 'pill', 'toothbrush']
+2026-02-28 16:43:30,726 - INFO -   use_data_augmentation: False
+2026-02-28 16:43:30,726 - INFO -   epochs: 120
+2026-02-28 16:43:30,726 - INFO -   batch_size: 2
+2026-02-28 16:43:30,726 - INFO -   gradient_accumulation_steps: 4
+2026-02-28 16:43:30,726 - INFO -   learning_rate: 0.0001
+2026-02-28 16:43:30,726 - INFO -   weight_decay: 0.01
+2026-02-28 16:43:30,726 - INFO -   max_grad_norm: 1.0
+2026-02-28 16:43:30,726 - INFO -   lr_scheduler: cosine
+2026-02-28 16:43:30,726 - INFO -   lr_warmup_steps: 100
+2026-02-28 16:43:30,726 - INFO -   lr_eta_min: 1e-06
+2026-02-28 16:43:30,726 - INFO -   save_every_n_epochs: 5
+2026-02-28 16:43:30,726 - INFO -   save_log_every_n_epochs: 5
+2026-02-28 16:43:30,726 - INFO -   output_dir: trained_models/train2
+2026-02-28 16:43:30,726 - INFO -   image_size: 512
+2026-02-28 16:43:30,726 - INFO -   train_split: 0.9
+2026-02-28 16:43:30,726 - INFO -   seed: 999
+2026-02-28 16:43:30,726 - INFO -   early_stop_patience: 20
+2026-02-28 16:43:30,726 - INFO -   early_stop_min_delta: 0.0001
+2026-02-28 16:43:30,726 - INFO -   min_epochs_before_early_stop: 20
+2026-02-28 16:43:30,726 - INFO -   num_workers: 2
+2026-02-28 16:43:30,726 - INFO - ==================================================
+2026-02-28 16:43:30,727 - INFO - 
+Loading Stable Diffusion model...
+2026-02-28 16:43:33,628 - INFO - ✓ Model loaded successfully
+2026-02-28 16:43:33,628 - INFO - 
+Applying LoRA configuration...
+2026-02-28 16:43:33,794 - INFO - LoRA applied:
+2026-02-28 16:43:33,798 - INFO - 
+Preparing dataset...
+2026-02-28 16:43:33,800 - INFO - Loaded 755 training images from 4 categories
+2026-02-28 16:43:33,800 - INFO -   bottle: 209 images
+2026-02-28 16:43:33,800 - INFO -   capsule: 219 images
+2026-02-28 16:43:33,800 - INFO -   pill: 267 images
+2026-02-28 16:43:33,800 - INFO -   toothbrush: 60 images
+2026-02-28 16:43:33,800 - INFO - 
+Dataset split: 679 training, 76 validation
+2026-02-28 16:43:33,800 - INFO - 
+Dataset split: 679 training, 76 validation
+2026-02-28 16:43:33,808 - INFO - 
+Starting training on 4 categories...
+2026-02-28 16:43:33,808 - INFO - Total epochs: 120
+2026-02-28 16:43:33,808 - INFO - Effective batch size: 8
+2026-02-28 16:43:33,809 - INFO - 
+==================================================
+2026-02-28 16:43:44,492 - INFO - Training Configuration:
+2026-02-28 16:43:44,492 - INFO - Training Configuration:
+2026-02-28 16:43:44,492 - INFO -   categories: ['bottle', 'capsule', 'pill', 'toothbrush']
+2026-02-28 16:43:44,492 - INFO -   use_data_augmentation: False
+2026-02-28 16:43:44,492 - INFO -   epochs: 120
+2026-02-28 16:43:44,492 - INFO -   batch_size: 2
+2026-02-28 16:43:44,492 - INFO -   gradient_accumulation_steps: 4
+2026-02-28 16:43:44,492 - INFO -   learning_rate: 0.0001
+2026-02-28 16:43:44,492 - INFO -   weight_decay: 0.01
+2026-02-28 16:43:44,492 - INFO -   max_grad_norm: 1.0
+2026-02-28 16:43:44,492 - INFO -   lr_scheduler: cosine
+2026-02-28 16:43:44,492 - INFO -   lr_warmup_steps: 100
+2026-02-28 16:43:44,492 - INFO -   lr_eta_min: 1e-06
+2026-02-28 16:43:44,492 - INFO -   save_every_n_epochs: 5
+2026-02-28 16:43:44,492 - INFO -   save_log_every_n_epochs: 5
+2026-02-28 16:43:44,492 - INFO -   output_dir: trained_models/train3
+2026-02-28 16:43:44,492 - INFO -   image_size: 512
+2026-02-28 16:43:44,492 - INFO -   train_split: 0.9
+2026-02-28 16:43:44,493 - INFO -   seed: 999
+2026-02-28 16:43:44,493 - INFO -   early_stop_patience: 20
+2026-02-28 16:43:44,493 - INFO -   early_stop_min_delta: 0.0001
+2026-02-28 16:43:44,493 - INFO -   min_epochs_before_early_stop: 20
+2026-02-28 16:43:44,493 - INFO -   num_workers: 2
+2026-02-28 16:43:44,493 - INFO - ==================================================
+2026-02-28 16:43:44,493 - INFO - 
+Loading Stable Diffusion model...
+2026-02-28 16:43:54,723 - INFO - ✓ Model loaded successfully
+2026-02-28 16:43:54,724 - INFO - 
+Applying LoRA configuration...
+2026-02-28 16:43:55,370 - INFO - LoRA applied:
+2026-02-28 16:43:55,372 - INFO - 
+Preparing dataset...
+2026-02-28 16:43:55,375 - INFO - Loaded 755 training images from 4 categories
+2026-02-28 16:43:55,375 - INFO -   bottle: 209 images
+2026-02-28 16:43:55,375 - INFO -   capsule: 219 images
+2026-02-28 16:43:55,375 - INFO -   pill: 267 images
+2026-02-28 16:43:55,375 - INFO -   toothbrush: 60 images
+2026-02-28 16:43:55,376 - INFO - 
+Dataset split: 679 training, 76 validation
+2026-02-28 16:43:55,376 - INFO - 
+Dataset split: 679 training, 76 validation
+2026-02-28 16:43:55,386 - INFO - 
+Starting training on 4 categories...
+2026-02-28 16:43:55,386 - INFO - Total epochs: 120
+2026-02-28 16:43:55,386 - INFO - Effective batch size: 8
+2026-02-28 16:43:55,386 - INFO - 
+==================================================
+2026-02-28 16:44:02,512 - INFO - Training Configuration:
+2026-02-28 16:44:02,512 - INFO - Training Configuration:
+2026-02-28 16:44:02,512 - INFO -   categories: ['bottle', 'capsule', 'pill', 'toothbrush']
+2026-02-28 16:44:02,513 - INFO -   use_data_augmentation: False
+2026-02-28 16:44:02,513 - INFO -   epochs: 120
+2026-02-28 16:44:02,513 - INFO -   batch_size: 2
+2026-02-28 16:44:02,513 - INFO -   gradient_accumulation_steps: 4
+2026-02-28 16:44:02,513 - INFO -   learning_rate: 0.0001
+2026-02-28 16:44:02,513 - INFO -   weight_decay: 0.01
+2026-02-28 16:44:02,513 - INFO -   max_grad_norm: 1.0
+2026-02-28 16:44:02,513 - INFO -   lr_scheduler: cosine
+2026-02-28 16:44:02,513 - INFO -   lr_warmup_steps: 100
+2026-02-28 16:44:02,513 - INFO -   lr_eta_min: 1e-06
+2026-02-28 16:44:02,513 - INFO -   save_every_n_epochs: 5
+2026-02-28 16:44:02,513 - INFO -   save_log_every_n_epochs: 5
+2026-02-28 16:44:02,513 - INFO -   output_dir: trained_models/train4
+2026-02-28 16:44:02,513 - INFO -   image_size: 512
+2026-02-28 16:44:02,513 - INFO -   train_split: 0.9
+2026-02-28 16:44:02,513 - INFO -   seed: 999
+2026-02-28 16:44:02,513 - INFO -   early_stop_patience: 20
+2026-02-28 16:44:02,513 - INFO -   early_stop_min_delta: 0.0001
+2026-02-28 16:44:02,513 - INFO -   min_epochs_before_early_stop: 20
+2026-02-28 16:44:02,513 - INFO -   num_workers: 2
+2026-02-28 16:44:02,513 - INFO - ==================================================
+2026-02-28 16:44:02,514 - INFO - 
+Loading Stable Diffusion model...
+2026-02-28 16:44:19,405 - INFO - Training Configuration:
+2026-02-28 16:44:19,406 - INFO - Training Configuration:
+2026-02-28 16:44:19,406 - INFO -   categories: ['bottle', 'capsule', 'pill', 'toothbrush']
+2026-02-28 16:44:19,406 - INFO -   use_data_augmentation: False
+2026-02-28 16:44:19,406 - INFO -   epochs: 120
+2026-02-28 16:44:19,406 - INFO -   batch_size: 2
+2026-02-28 16:44:19,406 - INFO -   gradient_accumulation_steps: 4
+2026-02-28 16:44:19,406 - INFO -   learning_rate: 0.0001
+2026-02-28 16:44:19,406 - INFO -   weight_decay: 0.01
+2026-02-28 16:44:19,406 - INFO -   max_grad_norm: 1.0
+2026-02-28 16:44:19,406 - INFO -   lr_scheduler: cosine
+2026-02-28 16:44:19,406 - INFO -   lr_warmup_steps: 100
+2026-02-28 16:44:19,406 - INFO -   lr_eta_min: 1e-06
+2026-02-28 16:44:19,406 - INFO -   save_every_n_epochs: 5
+2026-02-28 16:44:19,406 - INFO -   save_log_every_n_epochs: 5
+2026-02-28 16:44:19,406 - INFO -   output_dir: trained_models/train5
+2026-02-28 16:44:19,406 - INFO -   image_size: 512
+2026-02-28 16:44:19,406 - INFO -   train_split: 0.9
+2026-02-28 16:44:19,406 - INFO -   seed: 999
+2026-02-28 16:44:19,406 - INFO -   early_stop_patience: 20
+2026-02-28 16:44:19,406 - INFO -   early_stop_min_delta: 0.0001
+2026-02-28 16:44:19,406 - INFO -   min_epochs_before_early_stop: 20
+2026-02-28 16:44:19,406 - INFO -   num_workers: 2
+2026-02-28 16:44:19,406 - INFO - ==================================================
+2026-02-28 16:44:19,406 - INFO - 
+Loading Stable Diffusion model...
+2026-02-28 16:44:19,913 - ERROR - Failed to load model in offline mode: CUDA out of memory. Tried to allocate 26.00 MiB. GPU 0 has a total capacity of 11.62 GiB of which 41.88 MiB is free. Process 1570 has 46.53 MiB memory in use. Process 77702 has 4.52 GiB memory in use. Process 77969 has 4.52 GiB memory in use. Including non-PyTorch memory, this process has 1.33 GiB memory in use. Of the allocated memory 1.17 GiB is allocated by PyTorch, and 49.17 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+2026-02-28 16:44:19,917 - INFO - Trying online mode (this may take time)...
+2026-02-28 16:44:23,927 - INFO - HTTP Request: GET https://huggingface.co/api/models/runwayml/stable-diffusion-v1-5 "HTTP/1.1 307 Temporary Redirect"
+2026-02-28 16:44:26,243 - INFO - HTTP Request: GET https://huggingface.co/api/models/stable-diffusion-v1-5/stable-diffusion-v1-5 "HTTP/1.1 200 OK"
+2026-02-28 16:44:43,568 - INFO - HTTP Request: HEAD https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/model_index.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-28 16:44:43,797 - INFO - HTTP Request: HEAD https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/model_index.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-28 16:44:43,811 - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-02-28 16:44:43,971 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/stable-diffusion-v1-5/stable-diffusion-v1-5/451f4fe16113bff5a5d2269ed5ad43b0592e9a14/model_index.json "HTTP/1.1 200 OK"
+2026-02-28 16:44:44,515 - ERROR - Failed to load model in offline mode: CUDA out of memory. Tried to allocate 74.00 MiB. GPU 0 has a total capacity of 11.62 GiB of which 56.25 MiB is free. Process 1570 has 46.53 MiB memory in use. Process 77702 has 4.52 GiB memory in use. Process 77969 has 4.52 GiB memory in use. Process 78436 has 1.33 GiB memory in use. Including non-PyTorch memory, this process has 104.00 MiB memory in use. Of the allocated memory 0 bytes is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+2026-02-28 16:44:44,517 - INFO - Trying online mode (this may take time)...
+2026-02-28 16:46:00,388 - INFO - Training Configuration:
+2026-02-28 16:46:00,388 - INFO - Training Configuration:
+2026-02-28 16:46:00,388 - INFO -   categories: ['bottle', 'capsule', 'pill', 'toothbrush']
+2026-02-28 16:46:00,388 - INFO -   use_data_augmentation: False
+2026-02-28 16:46:00,388 - INFO -   epochs: 120
+2026-02-28 16:46:00,388 - INFO -   batch_size: 2
+2026-02-28 16:46:00,388 - INFO -   gradient_accumulation_steps: 4
+2026-02-28 16:46:00,389 - INFO -   learning_rate: 0.0001
+2026-02-28 16:46:00,389 - INFO -   weight_decay: 0.01
+2026-02-28 16:46:00,389 - INFO -   max_grad_norm: 1.0
+2026-02-28 16:46:00,389 - INFO -   lr_scheduler: cosine
+2026-02-28 16:46:00,389 - INFO -   lr_warmup_steps: 100
+2026-02-28 16:46:00,389 - INFO -   lr_eta_min: 1e-06
+2026-02-28 16:46:00,389 - INFO -   save_every_n_epochs: 5
+2026-02-28 16:46:00,389 - INFO -   save_log_every_n_epochs: 5
+2026-02-28 16:46:00,389 - INFO -   output_dir: trained_models/train6
+2026-02-28 16:46:00,389 - INFO -   image_size: 512
+2026-02-28 16:46:00,389 - INFO -   train_split: 0.9
+2026-02-28 16:46:00,389 - INFO -   seed: 999
+2026-02-28 16:46:00,389 - INFO -   early_stop_patience: 20
+2026-02-28 16:46:00,389 - INFO -   early_stop_min_delta: 0.0001
+2026-02-28 16:46:00,389 - INFO -   min_epochs_before_early_stop: 20
+2026-02-28 16:46:00,389 - INFO -   num_workers: 2
+2026-02-28 16:46:00,389 - INFO - ==================================================
+2026-02-28 16:46:00,389 - INFO - 
+Loading Stable Diffusion model...
+2026-02-28 16:46:02,901 - INFO - ✓ Model loaded successfully
+2026-02-28 16:46:02,901 - INFO - 
+Applying LoRA configuration...
+2026-02-28 16:46:03,042 - INFO - LoRA applied:
+2026-02-28 16:46:03,044 - INFO - 
+Preparing dataset...
+2026-02-28 16:46:03,046 - INFO - Loaded 755 training images from 4 categories
+2026-02-28 16:46:03,046 - INFO -   bottle: 209 images
+2026-02-28 16:46:03,046 - INFO -   capsule: 219 images
+2026-02-28 16:46:03,046 - INFO -   pill: 267 images
+2026-02-28 16:46:03,046 - INFO -   toothbrush: 60 images
+2026-02-28 16:46:03,047 - INFO - 
+Dataset split: 679 training, 76 validation
+2026-02-28 16:46:03,047 - INFO - 
+Dataset split: 679 training, 76 validation
+2026-02-28 16:46:03,053 - INFO - 
+Starting training on 4 categories...
+2026-02-28 16:46:03,053 - INFO - Total epochs: 120
+2026-02-28 16:46:03,053 - INFO - Effective batch size: 8
+2026-02-28 16:46:03,053 - INFO - 
+==================================================
+2026-02-28 17:43:06,812 - INFO - Training Configuration:
+2026-02-28 17:43:06,812 - INFO - Training Configuration:
+2026-02-28 17:43:06,812 - INFO -   categories: ['bottle', 'capsule', 'pill', 'toothbrush']
+2026-02-28 17:43:06,812 - INFO -   use_data_augmentation: False
+2026-02-28 17:43:06,812 - INFO -   epochs: 120
+2026-02-28 17:43:06,812 - INFO -   batch_size: 2
+2026-02-28 17:43:06,812 - INFO -   gradient_accumulation_steps: 4
+2026-02-28 17:43:06,813 - INFO -   learning_rate: 0.0001
+2026-02-28 17:43:06,813 - INFO -   weight_decay: 0.01
+2026-02-28 17:43:06,813 - INFO -   max_grad_norm: 1.0
+2026-02-28 17:43:06,813 - INFO -   lr_scheduler: cosine
+2026-02-28 17:43:06,813 - INFO -   lr_warmup_steps: 100
+2026-02-28 17:43:06,813 - INFO -   lr_eta_min: 1e-06
+2026-02-28 17:43:06,813 - INFO -   save_every_n_epochs: 5
+2026-02-28 17:43:06,813 - INFO -   save_log_every_n_epochs: 5
+2026-02-28 17:43:06,813 - INFO -   output_dir: trained_models/train7
+2026-02-28 17:43:06,813 - INFO -   image_size: 512
+2026-02-28 17:43:06,813 - INFO -   train_split: 0.9
+2026-02-28 17:43:06,813 - INFO -   seed: 999
+2026-02-28 17:43:06,813 - INFO -   early_stop_patience: 20
+2026-02-28 17:43:06,813 - INFO -   early_stop_min_delta: 0.0001
+2026-02-28 17:43:06,813 - INFO -   min_epochs_before_early_stop: 20
+2026-02-28 17:43:06,813 - INFO -   num_workers: 0
+2026-02-28 17:43:06,813 - INFO - ==================================================
+2026-02-28 17:43:06,813 - INFO - 
+Loading Stable Diffusion model...
+2026-02-28 17:43:13,388 - INFO - ✓ Model loaded successfully
+2026-02-28 17:43:13,388 - INFO - 
+Applying LoRA configuration...
+2026-02-28 17:43:13,646 - INFO - LoRA applied:
+2026-02-28 17:43:13,651 - INFO - 
+Preparing dataset...
+2026-02-28 17:43:13,654 - INFO - Loaded 755 training images from 4 categories
+2026-02-28 17:43:13,655 - INFO -   bottle: 209 images
+2026-02-28 17:43:13,655 - INFO -   capsule: 219 images
+2026-02-28 17:43:13,655 - INFO -   pill: 267 images
+2026-02-28 17:43:13,655 - INFO -   toothbrush: 60 images
+2026-02-28 17:43:13,655 - INFO - 
+Dataset split: 679 training, 76 validation
+2026-02-28 17:43:13,656 - INFO - 
+Dataset split: 679 training, 76 validation
+2026-02-28 17:43:13,669 - INFO - 
+Starting training on 4 categories...
+2026-02-28 17:43:13,669 - INFO - Total epochs: 120
+2026-02-28 17:43:13,669 - INFO - Effective batch size: 8
+2026-02-28 17:43:13,669 - INFO - 
+==================================================
+2026-02-28 17:46:41,990 - INFO - Running validation...
+2026-02-28 17:46:56,769 - INFO - Epoch 1 finished. Train Loss: 0.1024 | Val Loss: 0.0835 | LR: 8.60e-05
+2026-02-28 17:46:56,769 - INFO -   ✓ New best validation loss! Saving best model...
+2026-02-28 17:46:56,867 - INFO -   ✓ Best model checkpoint saved to trained_models/train7/checkpoint_epoch_1_BEST
+2026-02-28 17:50:48,206 - INFO - Running validation...
+2026-02-28 17:51:04,104 - INFO - Epoch 2 finished. Train Loss: 0.0953 | Val Loss: 0.0655 | LR: 1.00e-04
+2026-02-28 17:51:04,104 - INFO -   ✓ New best validation loss! Saving best model...
+2026-02-28 17:51:04,183 - INFO -   ✓ Best model checkpoint saved to trained_models/train7/checkpoint_epoch_2_BEST
+2026-02-28 17:54:59,687 - INFO - Running validation...
+2026-02-28 17:55:15,648 - INFO - Epoch 3 finished. Train Loss: 0.0980 | Val Loss: 0.0934 | LR: 9.99e-05
+2026-02-28 17:59:10,605 - INFO - Running validation...
+2026-02-28 17:59:26,520 - INFO - Epoch 4 finished. Train Loss: 0.1117 | Val Loss: 0.0867 | LR: 9.99e-05
+2026-02-28 18:03:21,679 - INFO - Running validation...
+2026-02-28 18:03:37,616 - INFO - Epoch 5 finished. Train Loss: 0.1267 | Val Loss: 0.1051 | LR: 9.97e-05
+2026-02-28 18:03:37,660 - INFO - ✓ Checkpoint saved to trained_models/train7/checkpoint_epoch_5
+2026-02-28 18:07:31,154 - INFO - Running validation...
+2026-02-28 18:07:47,169 - INFO - Epoch 6 finished. Train Loss: 0.1072 | Val Loss: 0.1132 | LR: 9.96e-05
+2026-02-28 18:11:30,176 - INFO - Running validation...
+2026-02-28 18:11:46,212 - INFO - Epoch 7 finished. Train Loss: 0.1198 | Val Loss: 0.1124 | LR: 9.94e-05
+2026-02-28 18:15:41,606 - INFO - Running validation...
+2026-02-28 18:15:57,551 - INFO - Epoch 8 finished. Train Loss: 0.1167 | Val Loss: 0.1233 | LR: 9.92e-05
+2026-02-28 18:19:46,979 - INFO - Running validation...
+2026-02-28 18:20:02,921 - INFO - Epoch 9 finished. Train Loss: 0.1102 | Val Loss: 0.0713 | LR: 9.89e-05
+2026-02-28 18:23:51,072 - INFO - Running validation...
+2026-02-28 18:24:07,031 - INFO - Epoch 10 finished. Train Loss: 0.1087 | Val Loss: 0.1082 | LR: 9.86e-05
+2026-02-28 18:24:07,071 - INFO - ✓ Checkpoint saved to trained_models/train7/checkpoint_epoch_10
+2026-02-28 18:28:02,499 - INFO - Running validation...
+2026-02-28 18:28:18,478 - INFO - Epoch 11 finished. Train Loss: 0.1054 | Val Loss: 0.1159 | LR: 9.83e-05
+2026-02-28 18:31:45,205 - INFO - Running validation...
+2026-02-28 18:31:58,597 - INFO - Epoch 12 finished. Train Loss: 0.1036 | Val Loss: 0.1327 | LR: 9.80e-05
+2026-02-28 18:35:16,168 - INFO - Running validation...
+2026-02-28 18:35:29,533 - INFO - Epoch 13 finished. Train Loss: 0.1093 | Val Loss: 0.1045 | LR: 9.76e-05
+2026-02-28 18:38:46,329 - INFO - Running validation...
+2026-02-28 18:38:59,687 - INFO - Epoch 14 finished. Train Loss: 0.1032 | Val Loss: 0.0732 | LR: 9.72e-05
+2026-02-28 18:42:17,000 - INFO - Running validation...
+2026-02-28 18:42:30,387 - INFO - Epoch 15 finished. Train Loss: 0.1027 | Val Loss: 0.1049 | LR: 9.67e-05
+2026-02-28 18:42:30,424 - INFO - ✓ Checkpoint saved to trained_models/train7/checkpoint_epoch_15
+2026-02-28 18:45:47,921 - INFO - Running validation...
+2026-02-28 18:46:01,341 - INFO - Epoch 16 finished. Train Loss: 0.1048 | Val Loss: 0.1247 | LR: 9.62e-05
+2026-02-28 18:49:20,710 - INFO - Running validation...
+2026-02-28 18:49:34,405 - INFO - Epoch 17 finished. Train Loss: 0.1163 | Val Loss: 0.0773 | LR: 9.57e-05
+2026-02-28 18:52:57,528 - INFO - Running validation...
+2026-02-28 18:53:11,328 - INFO - Epoch 18 finished. Train Loss: 0.1007 | Val Loss: 0.1189 | LR: 9.51e-05
+2026-02-28 18:56:32,505 - INFO - Running validation...
+2026-02-28 18:56:45,958 - INFO - Epoch 19 finished. Train Loss: 0.1016 | Val Loss: 0.1203 | LR: 9.46e-05
+2026-02-28 19:00:06,245 - INFO - Running validation...
+2026-02-28 19:00:19,761 - INFO - Epoch 20 finished. Train Loss: 0.1108 | Val Loss: 0.1300 | LR: 9.39e-05
+2026-02-28 19:00:19,799 - INFO - ✓ Checkpoint saved to trained_models/train7/checkpoint_epoch_20
+2026-02-28 19:03:40,217 - INFO - Running validation...
+2026-02-28 19:03:53,667 - INFO - Epoch 21 finished. Train Loss: 0.1078 | Val Loss: 0.1156 | LR: 9.33e-05
+2026-02-28 19:07:13,759 - INFO - Running validation...
+2026-02-28 19:07:27,264 - INFO - Epoch 22 finished. Train Loss: 0.1163 | Val Loss: 0.0942 | LR: 9.26e-05
+2026-02-28 19:07:27,265 - WARNING - 
+⚠ Early stopping triggered at epoch 22: no val-loss improvement > 0.0001 for 20 epochs.
+2026-02-28 19:07:27,265 - WARNING -   Best epoch was 2 with val loss 0.0655
+2026-02-28 19:07:27,265 - INFO - 
+==================================================
+2026-02-28 19:07:27,265 - INFO - Training completed!
+2026-02-28 19:07:27,265 - INFO - 
+ Training Summary:
+2026-02-28 19:07:27,265 - INFO -   Best Epoch: 2
+2026-02-28 19:07:27,265 - INFO -     Train Loss: 0.0953
+2026-02-28 19:07:27,265 - INFO -     Val Loss: 0.0655
+2026-02-28 19:07:27,266 - INFO -   Final Epoch: 120
+2026-02-28 19:07:27,266 - INFO -     Train Loss: 0.1163
+2026-02-28 19:07:27,266 - INFO -     Val Loss: 0.0942
+2026-02-28 19:07:27,266 - WARNING -   Final model has higher validation loss - use 'best_model' directory instead!
+2026-02-28 19:07:27,266 - INFO - 
+Saving final trained model...
+2026-02-28 19:07:27,305 - INFO - Model saved to trained_models/train7/final_model
+2026-02-28 19:07:27,305 - INFO - 
+Generating test samples...
+2026-02-28 19:07:32,014 - INFO - Generated test sample for bottle
+2026-02-28 19:07:36,604 - INFO - Generated test sample for capsule
+2026-02-28 19:07:41,151 - INFO - Generated test sample for pill
+2026-02-28 19:07:45,715 - INFO - Generated test sample for toothbrush
+2026-02-28 19:07:45,715 - INFO - 
+Generating training plots...
+2026-02-28 19:07:46,505 - INFO - ✓ Training plot saved to trained_models/train7/training_validation_plot.png
+2026-02-28 19:07:46,505 - INFO - 
+==================================================
+2026-02-28 19:07:46,505 - INFO - All done! You can now run anomal_score.py to test the model.
+2026-02-28 19:07:46,505 - INFO - ==================================================
