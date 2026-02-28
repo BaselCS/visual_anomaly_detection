@@ -242,6 +242,27 @@ all_records = []
 output_dir = "anomaly_detection_results"
 os.makedirs(output_dir, exist_ok=True)
 
+
+def find_next_results_file(output_dir):
+    """Find the next available detection_results file number."""
+    base_file = os.path.join(output_dir, "detection_results.json")
+
+    # If base file doesn't exist, use it
+    if not os.path.exists(base_file):
+        return base_file, 0
+
+    # Find next available number
+    counter = 1
+    while True:
+        numbered_file = os.path.join(output_dir, f"detection_results_{counter}.json")
+        if not os.path.exists(numbered_file):
+            return numbered_file, counter
+        counter += 1
+
+
+# Reserve output filenames for this run so artifacts share the same run number
+results_file, file_number = find_next_results_file(output_dir)
+
 logger.info("\nStarting Anomaly Detection...\n" + "="*50)
 print("\nStarting Anomaly Detection...\n" + "="*50)
 
@@ -565,9 +586,14 @@ if len(eval_labels) > 0 and len(set(eval_labels)) > 1:
     plt.legend(fontsize=10)
     plt.grid(alpha=0.3)
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'roc_curve.png'), dpi=150)
-    logger.info(f" ROC curve saved to {output_dir}/roc_curve.png")
-    print(f" ROC curve saved to {output_dir}/roc_curve.png")
+    if file_number == 0:
+        roc_file = os.path.join(output_dir, "roc_curve.png")
+    else:
+        roc_file = os.path.join(output_dir, f"roc_curve_{file_number}.png")
+
+    plt.savefig(roc_file, dpi=150)
+    logger.info(f" ROC curve saved to {roc_file}")
+    print(f" ROC curve saved to {roc_file}")
 
     tp = sum(1 for y, p in zip(eval_labels, eval_predictions) if y == 1 and p == 1)
     tn = sum(1 for y, p in zip(eval_labels, eval_predictions) if y == 0 and p == 0)
@@ -650,26 +676,6 @@ current_run_data = {
     },
     "results": all_results
 }
-
-# Find next available numbered file
-def find_next_results_file(output_dir):
-    """Find the next available detection_results file number."""
-    base_file = os.path.join(output_dir, "detection_results.json")
-    
-    # If base file doesn't exist, use it
-    if not os.path.exists(base_file):
-        return base_file, 0
-    
-    # Find next available number
-    counter = 1
-    while True:
-        numbered_file = os.path.join(output_dir, f"detection_results_{counter}.json")
-        if not os.path.exists(numbered_file):
-            return numbered_file, counter
-        counter += 1
-
-# Get next available file
-results_file, file_number = find_next_results_file(output_dir)
 
 # Save current run to the new numbered file
 with open(results_file, "w") as f:
