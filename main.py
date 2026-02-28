@@ -25,10 +25,10 @@ def get_next_train_dir(base_dir="trained_models"):
 DEFAULT_CONFIG = {
     "categories": ["bottle", "capsule", "pill", "toothbrush"],
     "use_data_augmentation": False,  # Set to True to enable category-specific data augmentation
-    "epochs": 120,
+    "epochs": 150,
     "batch_size": 2,                  # Optimized for 3060 12GB
     "gradient_accumulation_steps": 4, # Effective batch size = 2 * 4 = 8
-    "learning_rate": 1e-4,
+    "learning_rate": 4e-6,
     "weight_decay": 1e-2,
     "max_grad_norm": 1.0,             # Gradient clipping to prevent explosion
     "lr_scheduler": "cosine",         # Learning rate decay
@@ -40,7 +40,7 @@ DEFAULT_CONFIG = {
     "image_size": 512,
     "train_split": 0.9,               # 90% training, 10% validation split 
     "seed": 999,
-    "early_stop_patience": 30,     # Stop if no improvement for x epochs
+    "early_stop_patience": 20,     # Stop if no improvement for x epochs
     "early_stop_min_delta": 1e-4,
     "min_epochs_before_early_stop": 50, # Don't allow early stopping before this many epochs
     "num_workers": 0,              # number of subprocesses for data loading, adjust based on CPU cores and memory, Windows users may want to set this to 0 for compatibility
