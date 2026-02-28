@@ -6,20 +6,27 @@ Run this once before training.
 import torch
 from diffusers import StableDiffusionPipeline
 
-print("Downloading Stable Diffusion model...")
-print("This will take several minutes but only needs to be done once.")
+MODEL_ID = "runwayml/stable-diffusion-v1-5"
+CACHE_LOCATION = "~/.cache/huggingface/hub/"
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model_id = "runwayml/stable-diffusion-v1-5"
 
-# Download and cache the model
-pipe = StableDiffusionPipeline.from_pretrained(
-    model_id, 
-    torch_dtype=torch.float16,
-    safety_checker=None,  # Disable to save memory
-    requires_safety_checker=False
-)
+def main() -> None:
+    print("Downloading Stable Diffusion model...")
+    print("This will take several minutes but only needs to be done once.")
 
-print(f"✓ Model downloaded successfully and cached!")
-print(f"Cache location: ~/.cache/huggingface/hub/")
-print(f"You can now run main.py without waiting for downloads.")
+    _ = "cuda" if torch.cuda.is_available() else "cpu"
+
+    StableDiffusionPipeline.from_pretrained(
+        MODEL_ID,
+        torch_dtype=torch.float16,
+        safety_checker=None,
+        requires_safety_checker=False,
+    )
+
+    print("✓ Model downloaded successfully and cached!")
+    print(f"Cache location: {CACHE_LOCATION}")
+    print("You can now run main.py without waiting for downloads.")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,16 +1,13 @@
-import argparse
 import json
 import logging
 import os
 import random
-import hashlib
 from datetime import datetime
 from typing import Dict, List, Tuple
-
 import numpy as np
 import torch
 from diffusers import StableDiffusionImg2ImgPipeline
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image
 from tqdm import tqdm
 
 
@@ -28,132 +25,101 @@ logger = logging.getLogger(__name__)
 MODEL_ID = "runwayml/stable-diffusion-v1-5"
 DEFAULT_CATEGORIES = ["bottle", "capsule", "pill", "toothbrush"]
 CATEGORY_PROMPTS = {
-    "bottle": "a high quality studio photo of a clean intact bottle product, centered, same shape and material, plain background",
-    "capsule": "a high quality close-up photo of a pharmaceutical drug capsule, intact medicine capsule, same color and shape, plain background",
-    "pill": "a high quality close-up photo of a pharmaceutical pill tablet, intact medicine tablet, same color and geometry, plain background",
-    "toothbrush": "a high quality studio photo of an intact toothbrush, same handle shape and bristle structure, plain background",
+    "bottle": (
+        "Professional pharmaceutical studio photography of a perfect intact medical bottle, "
+        "flawless surface, clear cap, sharp focus, high contrast, industrial quality control standard, "
+        "4k uhd, uniform material, plain neutral background"
+    ),
+    "capsule": (
+        "Macro photography of a single perfect pharmaceutical capsule, smooth glossy gelatin shell, "
+        "seamless texture, vibrant consistent color, high detail, studio lighting, "
+        "medical grade integrity, sharp edges, plain background"
+    ),
+    "pill": (
+        "Extreme macro shot of a perfect solid pharmaceutical pill tablet, uniform matte texture, "
+        "clean precise edges, consistent geometry, professional medical product photography, "
+        "flawless surface, sharp details, solid color"
+    ),
+    "toothbrush": (
+        "High resolution studio photo of a brand new intact toothbrush, perfect straight bristles, "
+        "flawless plastic handle, ergonomic design, industrial product photography, "
+        "uniform lighting, clean professional background"
+    ),
 }
 NEGATIVE_PROMPT = (
-    "defect, broken, crack, damaged, blur, text, logo, watermark, extra object, "
-    "deformed, unrealistic, cartoon, painting, sketch, cgi, 3d render"
+    "defect, broken, crack, scratch, contamination, dent, squeeze, deformed, blurry, "
+    "low quality, distorted, watermark, text, grainy, out of focus, artifacts, malformed, "
+    "dusty, dirty, low resolution, cartoon, painting, sketch, cgi, 3d render, "
+    "unrealistic, shadows, multiple objects"
 )
+DEFAULT_CONFIG = {
+    "train_dir": "data/train",
+    "output_dir": "data/train",
+    "min_blur_score": 8.0,          # Lower is blurrier. Adjust based on observed scores to filter out blurry generations.
+    "max_tries_multiplier": 2,      # Max generation attempts = target_count * multiplier. Set higher if many generations are expected to be rejected.
+    "image_size": 512,              # Stable Diffusion default is 512x512.
+    "num_steps": 30,                # Fewer steps = faster but lower quality. 
+    "guidance_scale": 5.5,          # How strongly the generation should follow the prompt. Higher values = more adherence to prompt but potentially less diversity. Adjust based on observed results.
+    "strength": 0.12,               # How much to transform the source image. Lower = more similar to source, higher = more change. Adjust based on observed results.
+    "seed": 999,                    
+    "IMAGES_PER_CATEGORY": 400,
+    "deterministic": True,         
+    "num_images_per_call": 2,       # How many images to generate in parallel per pipeline call. 2 is Good for 3060
+    "enable_xformers": True,        # Enable xFormers memory-efficient attention if available 
+    "enable_attention_slicing": False, # Enable attention slicing to reduce memory usage at the cost of speed,12Gb is usually enough without this.
+    "enable_vae_slicing": False,       # Enable VAE slicing to reduce memory usage during decoding at the cost of speed, 12Gb is usually enough without this
+}
 
 
 def stable_int(text: str) -> int:
-    return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:12], 16)
+    """
+    Generate a stable integer hash from a string. This is used to create category-specific seeds for generation that are consistent across runs, without relying on Python's built-in hash() which can vary between runs.
+    """
+
+    value = 0
+    for char in text:
+        value = (value * 131 + ord(char)) % 1_000_000_007
+    return value
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Generate synthetic normal images for anomaly-detection training."
-    )
-    parser.add_argument(
-        "--train-dir",
-        type=str,
-        default="data/train",
-        help="Flat train directory with files like category_001.png",
-    )
-    parser.add_argument(
-        "--output-dir",
-        type=str,
-        default="data/train",
-        help="Where synthetic images are written (default: append to train dir)",
-    )
-    parser.add_argument(
-        "--categories",
-        type=str,
-        nargs="+",
-        default=None,
-        help="Categories to generate for. If omitted, auto-detect from train data.",
-    )
-    parser.add_argument(
-        "--generation-method",
-        type=str,
-        default="augment",
-        choices=["augment", "diffusion"],
-        help="Synthetic generation method: augment (realism-first) or diffusion",
-    )
-    parser.add_argument(
-        "--ratio",
-        type=float,
-        default=0.3,
-        help="Synthetic-to-real ratio per category (recommended 0.2-0.4)",
-    )
-    parser.add_argument(
-        "--max-per-category",
-        type=int,
-        default=None,
-        help="Hard cap of generated images per category",
-    )
-    parser.add_argument(
-        "--min-blur-score",
-        type=float,
-        default=8.0,
-        help="Minimum sharpness score; lower is blurrier",
-    )
-    parser.add_argument(
-        "--max-tries-multiplier",
-        type=int,
-        default=8,
-        help="Max attempts is target_count * this value",
-    )
-    parser.add_argument(
-        "--image-size",
-        type=int,
-        default=512,
-        help="Generation image size",
-    )
-    parser.add_argument(
-        "--num-steps",
-        type=int,
-        default=30,
-        help="Diffusion inference steps",
-    )
-    parser.add_argument(
-        "--guidance-scale",
-        type=float,
-        default=5.5,
-        help="Classifier-free guidance scale",
-    )
-    parser.add_argument(
-        "--strength",
-        type=float,
-        default=0.12,
-        help="Img2img strength (lower keeps closer features to training image)",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Random seed",
-    )
-    parser.add_argument(
-        "--hash-size",
-        type=int,
-        default=16,
-        help="Perceptual hash size used for duplicate checking (higher = stricter detail)",
-    )
-    parser.add_argument(
-        "--duplicate-threshold",
-        type=int,
-        default=0,
-        help="Max Hamming distance to treat as duplicate (0 = exact hash match only)",
-    )
-    parser.add_argument(
-        "--randomize-environment",
-        action="store_true",
-        help="Randomize background/environment in augment mode to reduce environment bias",
-    )
-    parser.add_argument(
-        "--environment-strength",
-        type=float,
-        default=0.7,
-        help="How strongly to replace environment in augment mode (0..1)",
-    )
-    return parser.parse_args()
+def set_randomness(seed: int, deterministic: bool) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+
+    try:
+        torch.set_float32_matmul_precision("high")
+    except Exception:
+        pass
+
+    if deterministic:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+        try:
+            torch.use_deterministic_algorithms(True)
+        except Exception:
+            pass
+    else:
+        torch.backends.cudnn.deterministic = False
+        torch.backends.cudnn.benchmark = True
+        try:
+            torch.use_deterministic_algorithms(False)
+        except Exception:
+            pass
+
 
 
 def extract_category_and_index(filename: str) -> Tuple[str, int] | Tuple[None, None]:
+    """
+    Extract category and index from filename. Expected format: {category}_{index}.png
+    Returns (category, index) if valid, otherwise (None, None).
+    """
     if not filename.lower().endswith(".png"):
         return None, None
 
@@ -169,10 +135,12 @@ def extract_category_and_index(filename: str) -> Tuple[str, int] | Tuple[None, N
     return category, int(idx_text)
 
 
-def scan_train_dir(train_dir: str) -> Tuple[Dict[str, int], Dict[str, int], Dict[str, set]]:
+def scan_train_dir(train_dir: str) -> Tuple[Dict[str, int], Dict[str, int]]:
+    """
+Scan the training directory to count existing images per category and determine the maximum index used for each category. This helps in naming new generated images without overwriting existing ones.
+    """
     category_counts: Dict[str, int] = {}
     category_max_idx: Dict[str, int] = {}
-    category_hashes: Dict[str, set] = {}
 
     for filename in os.listdir(train_dir):
         category, idx = extract_category_and_index(filename)
@@ -182,29 +150,13 @@ def scan_train_dir(train_dir: str) -> Tuple[Dict[str, int], Dict[str, int], Dict
         category_counts[category] = category_counts.get(category, 0) + 1
         category_max_idx[category] = max(category_max_idx.get(category, 0), idx)
 
-    for category in category_counts:
-        category_hashes[category] = set()
-
-    return category_counts, category_max_idx, category_hashes
-
-
-def average_hash(image: Image.Image, hash_size: int = 8) -> int:
-    resized = image.convert("L").resize((hash_size, hash_size), Image.Resampling.BILINEAR)
-    arr = np.asarray(resized, dtype=np.float32)
-    mean = arr.mean()
-    bits = arr > mean
-
-    hash_value = 0
-    for bit in bits.flatten():
-        hash_value = (hash_value << 1) | int(bit)
-    return hash_value
-
-
-def hamming_distance(a: int, b: int) -> int:
-    return (a ^ b).bit_count()
+    return category_counts, category_max_idx
 
 
 def blur_score(image: Image.Image) -> float:
+    """
+    Calculate a blur score for the image using the variance of the Laplacian. used to filter out blurry generated images.
+    """
     gray = np.asarray(image.convert("L"), dtype=np.float32)
     gx = np.diff(gray, axis=1)
     gy = np.diff(gray, axis=0)
@@ -212,12 +164,18 @@ def blur_score(image: Image.Image) -> float:
 
 
 def brightness_ok(image: Image.Image, min_mean: float = 25.0, max_mean: float = 230.0) -> bool:
+    """
+    Check if the image brightness is within acceptable bounds by calculating the mean pixel intensity. This helps filter out generated images.
+    """
     gray = np.asarray(image.convert("L"), dtype=np.float32)
     mean_val = float(gray.mean())
     return min_mean <= mean_val <= max_mean
 
 
 def build_prompt(category: str) -> str:
+    """
+    Build a prompt for generating synthetic images of a given category.
+    """
     if category in CATEGORY_PROMPTS:
         return CATEGORY_PROMPTS[category]
     return (
@@ -227,6 +185,10 @@ def build_prompt(category: str) -> str:
 
 
 def collect_category_training_images(train_dir: str, categories: List[str]) -> Dict[str, List[str]]:
+    """
+        training images -> dict of category to list of image paths.
+        used for selecting source images for img2img generation.
+    """
     category_images: Dict[str, List[str]] = {c: [] for c in categories}
     for filename in os.listdir(train_dir):
         category, _ = extract_category_and_index(filename)
@@ -240,26 +202,12 @@ def collect_category_training_images(train_dir: str, categories: List[str]) -> D
     return category_images
 
 
-def preload_existing_hashes(
-    train_dir: str,
-    categories: List[str],
-    category_hashes: Dict[str, set],
-    hash_size: int,
-) -> None:
-    for filename in os.listdir(train_dir):
-        category, _ = extract_category_and_index(filename)
-        if category is None or category not in categories:
-            continue
-
-        img_path = os.path.join(train_dir, filename)
-        try:
-            with Image.open(img_path).convert("RGB") as img:
-                category_hashes[category].add(average_hash(img, hash_size=hash_size))
-        except Exception as exc:
-            logger.warning(f"Failed to hash existing image {img_path}: {exc}")
-
-
 def resolve_categories(requested_categories: List[str] | None, detected_categories: List[str]) -> List[str]:
+    """
+        If user/config gives categories (requested_categories), use them directly.
+        Else, if categories were detected from files in train_dir, use those.
+        Else, fallback to DEFAULT_CATEGORIES (bottle, capsule, pill, toothbrush).
+    """
     if requested_categories:
         return requested_categories
     if detected_categories:
@@ -267,195 +215,203 @@ def resolve_categories(requested_categories: List[str] | None, detected_categori
     return DEFAULT_CATEGORIES
 
 
-def estimate_foreground_mask(image: Image.Image) -> Image.Image:
-    arr = np.asarray(image.convert("RGB"), dtype=np.float32)
-    h, w, _ = arr.shape
+def load_img2img_pipeline(target_device: str, local_only: bool, config: dict) -> StableDiffusionImg2ImgPipeline:
+    model_pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+        MODEL_ID,
+        torch_dtype=torch.float16 if target_device == "cuda" else torch.float32,
+        safety_checker=None,
+        requires_safety_checker=False,
+        local_files_only=local_only,
+    ).to(target_device)
 
-    border = max(6, int(min(h, w) * 0.06))
-    border_pixels = np.concatenate(
-        [
-            arr[:border, :, :].reshape(-1, 3),
-            arr[-border:, :, :].reshape(-1, 3),
-            arr[:, :border, :].reshape(-1, 3),
-            arr[:, -border:, :].reshape(-1, 3),
-        ],
-        axis=0,
+    if target_device == "cuda" and config.get("enable_xformers", True):
+        try:
+            model_pipe.enable_xformers_memory_efficient_attention()
+            logger.info("xFormers memory-efficient attention enabled.")
+        except Exception as exc:
+            logger.warning(f"xFormers not enabled ({exc}). Continuing without it.")
+
+    if config.get("enable_attention_slicing", False):
+        model_pipe.enable_attention_slicing()
+    if config.get("enable_vae_slicing", False):
+        model_pipe.enable_vae_slicing()
+
+    return model_pipe
+
+
+
+def load_pipeline_with_fallback(config: dict) -> tuple[StableDiffusionImg2ImgPipeline, str]:
+    """Load the img2img pipeline with GPU-first policy and safe fallbacks."""
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    logger.info("Loading Stable Diffusion Img2Img pipeline...")
+    logger.info(
+        f"Runtime config | deterministic={config.get('deterministic', False)} "
+        f"| num_images_per_call={config.get('num_images_per_call', 1)}"
     )
 
-    bg_color = np.median(border_pixels, axis=0)
-    dist = np.linalg.norm(arr - bg_color, axis=2)
+    try:
+        pipe = load_img2img_pipeline(device, local_only=True, config=config)
+        return pipe, device
+    except Exception as exc:
+        is_oom = "out of memory" in str(exc).lower()
+        if device == "cuda" and is_oom:
+            logger.warning(f"GPU OOM while loading pipeline ({exc}). Falling back to CPU generation.")
+            torch.cuda.empty_cache()
+            device = "cpu"
+            pipe = load_img2img_pipeline(device, local_only=True, config=config)
+            return pipe, device
 
-    threshold = max(14.0, float(np.percentile(dist, 72)))
-    fg = (dist > threshold).astype(np.uint8) * 255
-
-    mask = Image.fromarray(fg, mode="L")
-    mask = mask.filter(ImageFilter.GaussianBlur(radius=2.0))
-    return mask
-
-
-def make_random_environment(rng: random.Random, image_size: int) -> Image.Image:
-    h, w = image_size, image_size
-    base = np.zeros((h, w, 3), dtype=np.float32)
-
-    c1 = np.array([rng.randint(150, 250), rng.randint(150, 250), rng.randint(150, 250)], dtype=np.float32)
-    c2 = np.array([rng.randint(80, 220), rng.randint(80, 220), rng.randint(80, 220)], dtype=np.float32)
-
-    horizontal = rng.random() < 0.5
-    axis = np.linspace(0.0, 1.0, w if horizontal else h, dtype=np.float32)
-    if horizontal:
-        grad = axis[None, :, None]
-    else:
-        grad = axis[:, None, None]
-
-    base = c1 * (1.0 - grad) + c2 * grad
-    if horizontal:
-        base = np.repeat(base, h, axis=0)
-    else:
-        base = np.repeat(base, w, axis=1)
-
-    noise = np.random.normal(loc=0.0, scale=rng.uniform(4.0, 10.0), size=(h, w, 3)).astype(np.float32)
-    base = np.clip(base + noise, 0, 255)
-    return Image.fromarray(base.astype(np.uint8), mode="RGB")
+        logger.warning(f"Offline load failed ({exc}), trying online mode...")
+        pipe = load_img2img_pipeline(device, local_only=False, config=config)
+        return pipe, device
 
 
-def apply_environment_randomization(
-    image: Image.Image,
-    rng: random.Random,
-    image_size: int,
-    strength: float,
-) -> Image.Image:
-    strength = float(np.clip(strength, 0.0, 1.0))
-    if strength <= 0.0:
-        return image
+def generate_for_category(
+    category: str,
+    config: dict,
+    pipe: StableDiffusionImg2ImgPipeline,
+    device: str,
+    source_images: List[str],
+    current_idx: int,
+    desired_count: int,
+    max_tries: int,
+    rejected_category_dir: str
+) :
+    """Generate images for one category and return run statistics."""
+    generated = 0
+    attempted = 0
+    rejected_blur = 0
+    rejected_brightness = 0
+    rejected_saved = 0
+    category_out = []
 
-    fg_mask = estimate_foreground_mask(image)
-    env = make_random_environment(rng, image_size)
+    progress = tqdm(total=desired_count, desc=f"Generating {category}")
 
-    composite = Image.composite(image, env, fg_mask)
-    return Image.blend(image, composite, strength)
+    while generated < desired_count and attempted < max_tries:
+        prompt = build_prompt(category)
+        source_image_path = random.choice(source_images)
 
-def augment_from_source(
-    source_image: Image.Image,
-    rng: random.Random,
-    image_size: int,
-    randomize_environment: bool,
-    environment_strength: float,
-) -> Image.Image:
-    img = source_image.resize((image_size, image_size), Image.Resampling.BILINEAR)
+        try:
+            with Image.open(source_image_path).convert("RGB") as raw_image:
+                source_image = raw_image.resize(
+                    (config["image_size"], config["image_size"]), Image.Resampling.BILINEAR
+                )
+        except Exception as exc:
+            logger.warning(f"Failed to open source image {source_image_path}: {exc}")
+            continue
 
-    if rng.random() < 0.5:
-        img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        try:
+            batch_size = max(1, int(config.get("num_images_per_call", 1)))
+            batch_size = min(batch_size, max_tries - attempted)
 
-    crop_scale = rng.uniform(0.92, 0.99)
-    crop_w = int(image_size * crop_scale)
-    crop_h = int(image_size * crop_scale)
-    max_x = max(0, image_size - crop_w)
-    max_y = max(0, image_size - crop_h)
-    left = rng.randint(0, max_x) if max_x > 0 else 0
-    top = rng.randint(0, max_y) if max_y > 0 else 0
-    img = img.crop((left, top, left + crop_w, top + crop_h)).resize(
-        (image_size, image_size), Image.Resampling.BILINEAR
-    )
+            generators = []
+            for batch_idx in range(batch_size):
+                generator = torch.Generator(device=device)
+                generator.manual_seed(config["seed"] + attempted + batch_idx + (stable_int(category) % 10000))
+                generators.append(generator)
 
-    brightness = rng.uniform(0.92, 1.08)
-    contrast = rng.uniform(0.92, 1.08)
-    color = rng.uniform(0.95, 1.05)
-    sharpness = rng.uniform(0.95, 1.15)
+            result = pipe(
+                prompt=prompt,
+                negative_prompt=NEGATIVE_PROMPT,
+                image=source_image,
+                strength=config["strength"],
+                num_inference_steps=config["num_steps"],
+                guidance_scale=config["guidance_scale"],
+                num_images_per_prompt=batch_size,
+                generator=generators,
+            )
+        except Exception as exc:
+            logger.warning(f"Generation failed for {category} at try {attempted + 1}: {exc}")
+            continue
 
-    img = ImageEnhance.Brightness(img).enhance(brightness)
-    img = ImageEnhance.Contrast(img).enhance(contrast)
-    img = ImageEnhance.Color(img).enhance(color)
-    img = ImageEnhance.Sharpness(img).enhance(sharpness)
+        for image in result.images:
+            attempted += 1
+            sharpness = blur_score(image)
+            image_bad = sharpness < config["min_blur_score"] or not brightness_ok(image)
 
-    if randomize_environment:
-        img = apply_environment_randomization(
-            img,
-            rng=rng,
-            image_size=image_size,
-            strength=environment_strength,
-        )
+            if sharpness < config["min_blur_score"]:
+                rejected_blur += 1
+            if not brightness_ok(image):
+                rejected_brightness += 1
 
-    return img
+            if image_bad:
+                rejected_name = f"{category}_rejected_{attempted:05d}.png"
+                rejected_path = os.path.join(rejected_category_dir, rejected_name)
+                image.save(rejected_path)
+                rejected_saved += 1
+            else:
+                current_idx += 1
+                filename = f"{category}_{current_idx:03d}.png"
+                save_path = os.path.join(config["output_dir"], filename)
+                image.save(save_path)
+                generated += 1
+                progress.update(1)
+                category_out.append(
+                    {
+                        "file": filename,
+                        "prompt": prompt,
+                        "source_image": os.path.basename(source_image_path),
+                        "sharpness": sharpness,
+                    }
+                )
+
+            if generated >= desired_count or attempted >= max_tries:
+                break
+
+    progress.close()
+
+    return {
+        "generated": generated,
+        "attempted": attempted,
+        "rejected_blur": rejected_blur,
+        "rejected_brightness": rejected_brightness,
+        "rejected_saved": rejected_saved,
+        "files": category_out,
+    }
+
+
 
 
 def main() -> None:
-    args = parse_args()
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
+    config = dict(DEFAULT_CONFIG)
+    config["seed"] = config.get("seed", random.randint(0, 1_000_000_000))
+    set_randomness(config["seed"], deterministic=config.get("deterministic", False))
 
-    if not os.path.exists(args.train_dir):
-        raise FileNotFoundError(f"Train directory not found: {args.train_dir}")
+    train_dir = config["train_dir"]
+    output_dir = config["output_dir"]
 
-    os.makedirs(args.output_dir, exist_ok=True)
+    if not os.path.exists(train_dir):
+        raise FileNotFoundError(f"Train directory not found: {train_dir}")
 
-    category_counts, category_max_idx, category_hashes = scan_train_dir(args.train_dir)
-    categories = resolve_categories(args.categories, list(category_counts.keys()))
+    os.makedirs(output_dir, exist_ok=True)
+    rejected_root = os.path.join(train_dir, "rejected")
+    os.makedirs(rejected_root, exist_ok=True)
+
+    category_counts, category_max_idx = scan_train_dir(train_dir)
+    categories = resolve_categories(config.get("categories"), list(category_counts.keys()))
 
     logger.info("Detected category counts from train dir:")
     for category in categories:
         logger.info(f"  {category}: {category_counts.get(category, 0)} real/total images")
 
-    pipe = None
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    if args.generation_method == "diffusion":
-        logger.info("Loading Stable Diffusion Img2Img pipeline...")
-
-        def load_pipe(target_device: str, local_only: bool):
-            model_pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
-                MODEL_ID,
-                torch_dtype=torch.float16 if target_device == "cuda" else torch.float32,
-                safety_checker=None,
-                requires_safety_checker=False,
-                local_files_only=local_only,
-            ).to(target_device)
-            model_pipe.enable_attention_slicing()
-            model_pipe.enable_vae_slicing()
-            return model_pipe
-
-        try:
-            pipe = load_pipe(device, local_only=True)
-        except Exception as exc:
-            is_oom = "out of memory" in str(exc).lower()
-            if device == "cuda" and is_oom:
-                logger.warning(f"GPU OOM while loading pipeline ({exc}). Falling back to CPU generation.")
-                torch.cuda.empty_cache()
-                device = "cpu"
-                pipe = load_pipe(device, local_only=True)
-            else:
-                logger.warning(f"Offline load failed ({exc}), trying online mode...")
-                pipe = load_pipe(device, local_only=False)
-    else:
-        logger.info("Using realism-first augmentation mode (no diffusion model loading).")
-
-    category_training_images = collect_category_training_images(args.train_dir, categories)
-
-    preload_existing_hashes(
-        args.train_dir,
-        categories,
-        category_hashes,
-        hash_size=args.hash_size,
-    )
+    pipe, device = load_pipeline_with_fallback(config)
+    category_training_images = collect_category_training_images(train_dir, categories)
 
     run_summary = {
         "timestamp": datetime.now().isoformat(),
-        "config": vars(args),
+        "config": config,
         "categories": {},
     }
 
     for category in categories:
         real_count = category_counts.get(category, 0)
-        target_count = max(1, int(round(real_count * args.ratio))) if real_count > 0 else 50
-        if args.max_per_category is not None:
-            target_count = min(target_count, args.max_per_category)
-
-        max_tries = max(target_count * args.max_tries_multiplier, target_count + 10)
+        desired_count = int(config.get("images_per_category", config.get("IMAGES_PER_CATEGORY", 400)))
+        max_tries = max(desired_count * config["max_tries_multiplier"], desired_count + 10)
         current_idx = category_max_idx.get(category, 0)
 
         logger.info("=" * 64)
         logger.info(
-            f"Category: {category} | real={real_count} | target_synthetic={target_count} | max_tries={max_tries}"
+            f"Category: {category} | real={real_count} | target_synthetic={desired_count} | max_tries={max_tries}"
         )
 
         source_images = category_training_images.get(category, [])
@@ -463,126 +419,49 @@ def main() -> None:
             logger.warning(f"No source training images found for {category}. Skipping.")
             run_summary["categories"][category] = {
                 "real_count": real_count,
-                "target_synthetic": target_count,
+                "target_synthetic": desired_count,
                 "generated": 0,
                 "attempted": 0,
                 "rejected_blur": 0,
                 "rejected_brightness": 0,
-                "rejected_duplicate": 0,
+                "rejected_saved": 0,
                 "files": [],
                 "skipped": "no_source_training_images",
             }
             continue
 
-        generated = 0
-        attempted = 0
-        rejected_blur = 0
-        rejected_brightness = 0
-        rejected_duplicate = 0
+        rejected_category_dir = os.path.join(rejected_root, category)
+        os.makedirs(rejected_category_dir, exist_ok=True)
 
-        category_out = []
-        progress = tqdm(total=target_count, desc=f"Generating {category}")
-
-        while generated < target_count and attempted < max_tries:
-            attempted += 1
-            prompt = build_prompt(category)
-
-            source_image_path = random.choice(source_images)
-            try:
-                source_image = Image.open(source_image_path).convert("RGB").resize(
-                    (args.image_size, args.image_size), Image.Resampling.BILINEAR
-                )
-            except Exception as exc:
-                logger.warning(f"Failed to open source image {source_image_path}: {exc}")
-                continue
-
-            try:
-                if args.generation_method == "augment":
-                    aug_seed = args.seed + attempted + (stable_int(f"{category}:{os.path.basename(source_image_path)}") % 1_000_000)
-                    aug_rng = random.Random(aug_seed)
-                    image = augment_from_source(
-                        source_image,
-                        aug_rng,
-                        args.image_size,
-                        randomize_environment=args.randomize_environment,
-                        environment_strength=args.environment_strength,
-                    )
-                else:
-                    generator = torch.Generator(device=device)
-                    generator.manual_seed(args.seed + attempted + (stable_int(category) % 10000))
-                    image = pipe(
-                        prompt=prompt,
-                        negative_prompt=NEGATIVE_PROMPT,
-                        image=source_image,
-                        strength=args.strength,
-                        num_inference_steps=args.num_steps,
-                        guidance_scale=args.guidance_scale,
-                        generator=generator,
-                    ).images[0]
-            except Exception as exc:
-                logger.warning(f"Generation failed for {category} at try {attempted}: {exc}")
-                continue
-
-            sharpness = blur_score(image)
-            if sharpness < args.min_blur_score:
-                rejected_blur += 1
-                continue
-
-            if not brightness_ok(image):
-                rejected_brightness += 1
-                continue
-
-            candidate_hash = average_hash(image, hash_size=args.hash_size)
-            existing_hashes = category_hashes.setdefault(category, set())
-            is_duplicate = any(
-                hamming_distance(candidate_hash, known_hash) <= args.duplicate_threshold
-                for known_hash in existing_hashes
-            )
-            if is_duplicate:
-                rejected_duplicate += 1
-                continue
-
-            current_idx += 1
-            filename = f"{category}_{current_idx:03d}.png"
-            save_path = os.path.join(args.output_dir, filename)
-            image.save(save_path)
-
-            existing_hashes.add(candidate_hash)
-            generated += 1
-            progress.update(1)
-
-            category_out.append(
-                {
-                    "file": filename,
-                    "prompt": prompt,
-                    "source_image": os.path.basename(source_image_path),
-                    "sharpness": sharpness,
-                }
-            )
-
-        progress.close()
+        category_result = generate_for_category(
+            category=category,
+            config=config,
+            pipe=pipe,
+            device=device,
+            source_images=source_images,
+            current_idx=current_idx,
+            desired_count=desired_count,
+            max_tries=max_tries,
+            rejected_category_dir=rejected_category_dir,
+        )
 
         logger.info(
-            f"Finished {category}: generated={generated}, attempts={attempted}, "
-            f"rejected_blur={rejected_blur}, rejected_brightness={rejected_brightness}, "
-            f"rejected_duplicate={rejected_duplicate}"
+            f"Finished {category}: generated={category_result['generated']}, "
+            f"attempts={category_result['attempted']}, rejected_blur={category_result['rejected_blur']}, "
+            f"rejected_brightness={category_result['rejected_brightness']}, "
+            f"rejected_saved={category_result['rejected_saved']}"
         )
 
         run_summary["categories"][category] = {
             "real_count": real_count,
-            "target_synthetic": target_count,
-            "generated": generated,
-            "attempted": attempted,
-            "rejected_blur": rejected_blur,
-            "rejected_brightness": rejected_brightness,
-            "rejected_duplicate": rejected_duplicate,
-            "files": category_out,
+            "target_synthetic": desired_count,
+            **category_result,
         }
 
     summary_name = f"synthetic_generation_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    summary_path = os.path.join(args.output_dir, summary_name)
-    with open(summary_path, "w", encoding="utf-8") as f:
-        json.dump(run_summary, f, indent=2)
+    summary_path = os.path.join(output_dir, summary_name)
+    with open(summary_path, "w", encoding="utf-8") as file_obj:
+        json.dump(run_summary, file_obj, indent=2)
 
     logger.info("=" * 64)
     logger.info(f"Synthetic data generation complete. Summary: {summary_path}")

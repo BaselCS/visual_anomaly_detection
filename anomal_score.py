@@ -14,8 +14,18 @@ from sklearn.metrics import roc_auc_score, roc_curve
 import warnings
 from datetime import datetime
 import logging
+import subprocess
+import sys
 
 warnings.filterwarnings('ignore')
+
+DEFAULT_EVAL_CONFIG = {
+    "seed": 999,
+    "calibration_fraction": 0.3,                # Fraction of data used for calibration vs evaluation
+    "reconstruction_strength": 0.25,            # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
+    "reconstruction_guidance_scale": 6.5,       # Guidance scale for reconstruction (higher = more faithful to prompt, but may reduce diversity)
+    "reconstruction_steps": 30,                 # Number of steps for reconstruction (lower = faster but less refined)
+}
 
 # Configure logging
 logging.basicConfig(
@@ -28,11 +38,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-EVAL_SEED = 42
-CALIBRATION_FRACTION = 0.3
-RECONSTRUCTION_STRENGTH = 0.25
-RECONSTRUCTION_GUIDANCE_SCALE = 6.5
-RECONSTRUCTION_STEPS = 30
+
+def out(message: str, level: str = "info") -> None:
+    if level == "error":
+        logger.error(message)
+    elif level == "warning":
+        logger.warning(message)
+    else:
+        logger.info(message)
+    print(message)
+
+EVAL_CONFIG = dict(DEFAULT_EVAL_CONFIG)
+EVAL_SEED = EVAL_CONFIG["seed"]
+CALIBRATION_FRACTION = EVAL_CONFIG["calibration_fraction"]
+RECONSTRUCTION_STRENGTH = EVAL_CONFIG["reconstruction_strength"]
+RECONSTRUCTION_GUIDANCE_SCALE = EVAL_CONFIG["reconstruction_guidance_scale"]
+RECONSTRUCTION_STEPS = EVAL_CONFIG["reconstruction_steps"]
 
 
 def set_seed(seed: int) -> None:
@@ -41,11 +62,13 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
-
-
-def stable_int(text: str) -> int:
-    return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:12], 16)
-
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    try:
+        torch.use_deterministic_algorithms(True)
+    except Exception:
+        pass
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 def resolve_latest_train_run(base_dir: str) -> str:
     """Return latest trainX directory if present, else return base_dir."""
@@ -66,6 +89,25 @@ def resolve_latest_train_run(base_dir: str) -> str:
     train_dirs.sort(key=lambda x: x[0], reverse=True)
     return train_dirs[0][1]
 
+
+def resolve_model_path(run_models_dir: str) -> tuple[str | None, str | None]:
+    """
+    Check for best_model/ and final_model/ first, then look for checkpoint_epoch_XXX_BEST directories.
+    """
+    best_model_path = os.path.join(run_models_dir, "best_model")
+    final_model_path = os.path.join(run_models_dir, "final_model")
+
+    if os.path.exists(best_model_path):
+        return best_model_path, "best"
+    if os.path.exists(final_model_path):
+        return final_model_path, "final"
+
+    checkpoints = [d for d in os.listdir(run_models_dir) if d.startswith("checkpoint_epoch_") and "_BEST" in d]
+    if checkpoints:
+        checkpoints.sort(key=lambda x: int(x.split("_")[2]), reverse=True)
+        return os.path.join(run_models_dir, checkpoints[0]), "checkpoint"
+
+    return None, None
 
 def resolve_best_train_run(base_dir: str) -> str:
     """Select trainX run with best validation loss when available, else latest run."""
@@ -100,6 +142,10 @@ def resolve_best_train_run(base_dir: str) -> str:
     candidates.sort(key=lambda x: (x[0], -x[1]))
     return candidates[0][2]
 
+# Stable integer hashing for consistent seeding based on category and image name
+def stable_int(text: str) -> int:
+    return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:12], 16)
+
 # 1. Auto-detect trained models
 set_seed(EVAL_SEED)
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -107,51 +153,25 @@ model_id = "runwayml/stable-diffusion-v1-5"
 trained_models_dir = "trained_models"
 run_models_dir = resolve_best_train_run(trained_models_dir)
 
-logger.info("Detecting trained models...")
-print("Detecting trained models...")
+out("Detecting trained models...")
 if run_models_dir != trained_models_dir:
-    logger.info(f"Detected selected training run: {run_models_dir}")
-    print(f"Detected selected training run: {run_models_dir}")
+    out(f"Detected selected training run: {run_models_dir}")
 else:
-    logger.info(f"Using legacy model directory: {run_models_dir}")
-    print(f"Using legacy model directory: {run_models_dir}")
+    out(f"Using default model directory: {run_models_dir}")
 
-# Check for best model first, then final model, then checkpoints
-best_model_path = os.path.join(run_models_dir, "best_model")
-final_model_path = os.path.join(run_models_dir, "final_model")
-
-model_path = None
-model_type = None
-
-if os.path.exists(best_model_path):
-    model_path = best_model_path
-    model_type = "best"
-    logger.info(f"  ✓ Found best model: {best_model_path}")
-    print(f"  ✓ Found best model: {best_model_path}")
-elif os.path.exists(final_model_path):
-    model_path = final_model_path
-    model_type = "final"
-    logger.info(f"  ✓ Found final model: {final_model_path}")
-    print(f"  ✓ Found final model: {final_model_path}")
-else:
-    # Check for checkpoint with _BEST suffix
-    checkpoints = [d for d in os.listdir(run_models_dir) 
-                   if d.startswith("checkpoint_epoch_") and "_BEST" in d]
-    if checkpoints:
-        checkpoints.sort(key=lambda x: int(x.split("_")[2]), reverse=True)
-        model_path = os.path.join(run_models_dir, checkpoints[0])
-        model_type = "checkpoint"
-        logger.info(f"  ✓ Found best checkpoint: {model_path}")
-        print(f"  ✓ Found best checkpoint: {model_path}")
+model_path, model_type = resolve_model_path(run_models_dir)
+if model_path and model_type == "best":
+    out(f"  ✓ Found best model: {model_path}")
+elif model_path and model_type == "final":
+    out(f"  ✓ Found final model: {model_path}")
+elif model_path and model_type == "checkpoint":
+    out(f"  ✓ Found best checkpoint: {model_path}")
 
 if not model_path:
-    logger.error("ERROR: No trained models found!")
-    print("ERROR: No trained models found!")
-    logger.error("Please run main.py first to train the model.")
-    print("Please run main.py first to train the model.")
-    logger.error(f"Expected: {run_models_dir}/best_model/ or {run_models_dir}/final_model/")
-    print(f"Expected: {run_models_dir}/best_model/ or {run_models_dir}/final_model/")
-    exit(1)
+    out("ERROR: No trained models found!", level="error")
+    out("Please run main.py first to train the model.", level="error")
+    out(f"Expected: {run_models_dir}/best_model/ or {run_models_dir}/final_model/", level="error")
+    raise RuntimeError("No trained models found. Please run main.py first to train the model.")
 
 # Read training config to get the trained categories
 training_log_path = os.path.join(run_models_dir, "training_log.json")
@@ -161,31 +181,29 @@ if os.path.exists(training_log_path):
         trained_categories = training_log.get("config", {}).get("categories", ["bottle"])
         best_epoch = training_log.get("best_epoch", "unknown")
         best_loss = training_log.get("best_val_loss", training_log.get("best_loss", "unknown"))
-        logger.info(f"  Training info: Best epoch {best_epoch} with loss {best_loss}")
-        print(f"  Training info: Best epoch {best_epoch} with loss {best_loss}")
+        out(f"  Training info: Best epoch {best_epoch} with loss {best_loss}")
 else:
     trained_categories = ["bottle"]  # Default
 
-logger.info(f"\n✓ Using {model_type} model")
-print(f"\n✓ Using {model_type} model")
-logger.info(f"Will test categories: {', '.join(trained_categories)}\n")
-print(f"Will test categories: {', '.join(trained_categories)}\n")
+    out(f"\n✓ Using {model_type} model")
+    out(f"Will test categories: {', '.join(trained_categories)}\n")
 
 # Map categories to the model
 available_models = {category: model_path for category in trained_categories}
 
 # 2. Anomaly Score Function (دالة حساب الخطأ)
 def calculate_anomaly_score(original_image, reconstructed_image):
-    """Calculate pixel-wise difference between original and reconstructed images"""
-    # تحويل الصور إلى مصفوفات NumPy
+    """Calculate pixel-wise difference between original and reconstructed images by combining L1, L2, and a lightweight SSIM-inspired structural similarity."""
     org_np = np.array(original_image.resize((512, 512))).astype(np.float32) / 255.0
     rec_np = np.array(reconstructed_image.resize((512, 512))).astype(np.float32) / 255.0
     
-    # حساب الفرق (Multiple metrics)
     l1_diff = np.abs(org_np - rec_np)
     l2_diff = (org_np - rec_np) ** 2
     
     # Global SSIM-style structural similarity (lightweight, no external deps)
+    # SSIM components: luminance (mean), contrast (variance), structure (covariance)
+    # SSIM = ((2*mu_x*mu_y + C1) * (2*sigma_xy + C2)) / ((mu_x^2 + mu_y^2 + C1) * (sigma_x + sigma_y + C2)), where mu is mean, sigma is variance, and sigma_xy is covariance and c1, c2 are small constants to stabilize.
+
     org_gray = np.mean(org_np, axis=2)
     rec_gray = np.mean(rec_np, axis=2)
     mu_x = float(np.mean(org_gray))
@@ -217,7 +235,7 @@ def calculate_anomaly_score(original_image, reconstructed_image):
     
     return combined_score, l1_diff
 
-# 3. Process Test Images (معالجة صور الاختبار)
+# 3. Testing Images & Scoring 
 all_results = {}
 all_records = []
 
@@ -232,6 +250,9 @@ pipeline_cache = {}
 
 
 def get_or_create_pipeline(model_path: str):
+    """
+    Load the Stable Diffusion pipeline with the specified LoRA weights, using caching to avoid repeated loads.
+    """
     global device
 
     if model_path in pipeline_cache:
@@ -250,6 +271,12 @@ def get_or_create_pipeline(model_path: str):
         ).to(target_device)
         return pipe
 
+    def run_model_download() -> None:
+        out("Base model not found in local cache. Running download_model.py automatically...", level="warning")
+        subprocess.run([sys.executable, "download_model.py"], check=True)
+        out("Model download completed. Retrying pipeline load...")
+
+    download_attempted = False
     try:
         pipe = load_pipe(device)
     except Exception as e:
@@ -258,13 +285,40 @@ def get_or_create_pipeline(model_path: str):
             logger.warning(f"GPU OOM while loading scoring pipeline ({e}). Falling back to CPU.")
             torch.cuda.empty_cache()
             device = "cpu"
-            pipe = load_pipe(device)
+            try:
+                pipe = load_pipe(device)
+            except Exception as cpu_error:
+                if not download_attempted:
+                    download_attempted = True
+                    try:
+                        run_model_download()
+                        pipe = load_pipe(device)
+                    except Exception as download_error:
+                        raise RuntimeError(
+                            "Could not load Stable Diffusion model and automatic download failed. "
+                            f"Load error: {cpu_error}. Download error: {download_error}"
+                        ) from download_error
+                else:
+                    raise RuntimeError(
+                        "Could not load Stable Diffusion model from local cache after retry. "
+                        f"Original error: {cpu_error}"
+                    ) from cpu_error
         else:
-            raise RuntimeError(
-                "Could not load Stable Diffusion model from local cache. "
-                "Run 'uv run python download_model.py' once, then retry anomaly scoring. "
-                f"Original error: {e}"
-            )
+            if not download_attempted:
+                download_attempted = True
+                try:
+                    run_model_download()
+                    pipe = load_pipe(device)
+                except Exception as download_error:
+                    raise RuntimeError(
+                        "Could not load Stable Diffusion model and automatic download failed. "
+                        f"Load error: {e}. Download error: {download_error}"
+                    ) from download_error
+            else:
+                raise RuntimeError(
+                    "Could not load Stable Diffusion model from local cache after retry. "
+                    f"Original error: {e}"
+                ) from e
 
     # Attach LoRA once for this model path
     pipe.unet = PeftModel.from_pretrained(pipe.unet, model_path)
@@ -281,8 +335,8 @@ def get_or_create_pipeline(model_path: str):
 for category, model_path in available_models.items():
     logger.info(f"\n{'='*70}")
     print(f"\n{'='*70}")
-    logger.info(f"📦 TESTING CATEGORY: {category.upper()}")
-    print(f"📦 TESTING CATEGORY: {category.upper()}")
+    logger.info(f" TESTING CATEGORY: {category.upper()}")
+    print(f" TESTING CATEGORY: {category.upper()}")
     logger.info(f"   Model: {model_path}")
     print(f"   Model: {model_path}")
     logger.info(f"{'='*70}")
@@ -291,8 +345,8 @@ for category, model_path in available_models.items():
     # Load or reuse base+LoRA model for this category
     try:
         pipe = get_or_create_pipeline(model_path)
-        logger.info(f"✓ Loaded trained model for {category}\n")
-        print(f"✓ Loaded trained model for {category}\n")
+        logger.info(f" Loaded trained model for {category}\n")
+        print(f" Loaded trained model for {category}\n")
     except Exception as e:
         logger.error(f"Error loading LoRA weights: {e}")
         print(f"Error loading LoRA weights: {e}")
@@ -307,8 +361,8 @@ for category, model_path in available_models.items():
         continue
     
     category_results = {}
-    logger.info(f"\n📦 Processing category: {category.upper()}")
-    print(f"\n📦 Processing category: {category.upper()}")
+    logger.info(f"\n Processing category: {category.upper()}")
+    print(f"\n Processing category: {category.upper()}")
     
     # Get all test images for this category from flat directory
     # Format: category_testtype_001.png
@@ -332,11 +386,10 @@ for category, model_path in available_models.items():
             img_path = os.path.join(test_dir, img_name)
             
             try:
-                # أ. قراءة الصورة الأصلية
                 original_image = Image.open(img_path).convert("RGB")
                 
-                # ب. إعادة البناء (Reconstruction)
                 prompt = f"a high quality photo of a perfect {category}"
+                # reconstruct the image using the model and calculate anomaly score
                 image_seed = EVAL_SEED + (stable_int(f"{category}/{img_name}") % 1_000_000)
                 generator = torch.Generator(device=device)
                 generator.manual_seed(image_seed)
@@ -385,9 +438,9 @@ for category, model_path in available_models.items():
 logger.info("\n" + "="*50)
 print("\n" + "="*50)
 
-# 4. Automatic Threshold Detection & Metrics (حساب العتبة التلقائية والمقاييس)
-logger.info("\n📊 Calculating automatic threshold and metrics...")
-print("\n📊 Calculating automatic threshold and metrics...")
+# 4. Automatic Threshold Detection & Metrics Calculation 
+logger.info("\n Calculating automatic threshold and metrics...")
+print("\n Calculating automatic threshold and metrics...")
 
 by_category_records = {}
 for record in all_records:
@@ -395,6 +448,9 @@ for record in all_records:
 
 
 def split_calibration_eval(records, category):
+    """
+    Split records into calibration and evaluation sets while ensuring both sets contain samples from both classes (good and defect) for the given category.
+    """
     good = [r for r in records if r["label"] == 0]
     defect = [r for r in records if r["label"] == 1]
 
@@ -417,6 +473,9 @@ def split_calibration_eval(records, category):
 
 
 def youden_threshold(labels, oriented_scores):
+    """
+    Calculate the optimal threshold using Youden's J statistic from the ROC curve.
+    """
     fpr, tpr, thresholds = roc_curve(labels, oriented_scores)
     j_scores = tpr - fpr
     idx = int(np.argmax(j_scores))
@@ -429,6 +488,8 @@ eval_oriented_scores = []
 eval_predictions = []
 
 calibration_direction_summary = {}
+
+# Determine direction and threshold for each category, then apply to evaluation set
 for category, records in by_category_records.items():
     calib_records, eval_records, split_note = split_calibration_eval(records, category)
     calib_labels = [r["label"] for r in calib_records]
@@ -475,16 +536,17 @@ for category, records in by_category_records.items():
 overall_threshold_proxy = float(np.mean(list(per_category_thresholds.values()))) if per_category_thresholds else 0.0
 optimal_threshold = overall_threshold_proxy
 
+# Calculate metrics only if we have both classes in the evaluation set
 if len(eval_labels) > 0 and len(set(eval_labels)) > 1:
     auc_score = roc_auc_score(eval_labels, eval_oriented_scores)
     fpr, tpr, thresholds = roc_curve(eval_labels, eval_oriented_scores)
     j_scores = tpr - fpr
     optimal_idx = int(np.argmax(j_scores))
 
-    logger.info(f"\n✓ Proxy Threshold (mean of per-category thresholds): {optimal_threshold:.4f}")
-    print(f"\n✓ Proxy Threshold (mean of per-category thresholds): {optimal_threshold:.4f}")
-    logger.info(f"✓ AUC-ROC Score (evaluation split): {auc_score:.4f}")
-    print(f"✓ AUC-ROC Score (evaluation split): {auc_score:.4f}")
+    logger.info(f"\n Proxy Threshold (mean of per-category thresholds): {optimal_threshold:.4f}")
+    print(f"\n Proxy Threshold (mean of per-category thresholds): {optimal_threshold:.4f}")
+    logger.info(f" AUC-ROC Score (evaluation split): {auc_score:.4f}")
+    print(f" AUC-ROC Score (evaluation split): {auc_score:.4f}")
 
     plt.figure(figsize=(10, 6))
     plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {auc_score:.3f})', linewidth=2)
@@ -504,8 +566,8 @@ if len(eval_labels) > 0 and len(set(eval_labels)) > 1:
     plt.grid(alpha=0.3)
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'roc_curve.png'), dpi=150)
-    logger.info(f"✓ ROC curve saved to {output_dir}/roc_curve.png")
-    print(f"✓ ROC curve saved to {output_dir}/roc_curve.png")
+    logger.info(f" ROC curve saved to {output_dir}/roc_curve.png")
+    print(f" ROC curve saved to {output_dir}/roc_curve.png")
 
     tp = sum(1 for y, p in zip(eval_labels, eval_predictions) if y == 1 and p == 1)
     tn = sum(1 for y, p in zip(eval_labels, eval_predictions) if y == 0 and p == 0)
@@ -520,8 +582,8 @@ if len(eval_labels) > 0 and len(set(eval_labels)) > 1:
     tnr_val = tn / (tn + fp) if (tn + fp) > 0 else 0
     balanced_accuracy = 0.5 * (tpr_val + tnr_val)
 
-    logger.info(f"\n📈 Performance Metrics (evaluation split):")
-    print(f"\n📈 Performance Metrics (evaluation split):")
+    logger.info(f"\n Performance Metrics (evaluation split):")
+    print(f"\n Performance Metrics (evaluation split):")
     logger.info(f"  Accuracy:          {accuracy:.4f} ({accuracy*100:.2f}%)")
     print(f"  Accuracy:          {accuracy:.4f} ({accuracy*100:.2f}%)")
     logger.info(f"  Balanced Accuracy: {balanced_accuracy:.4f}")
@@ -542,9 +604,9 @@ else:
     recall = None
     f1 = None
 
-# 5. Category-wise Summary (ملخص حسب الفئات)
-logger.info(f"\n📋 Results by Category:")
-print(f"\n📋 Results by Category:")
+# 5. Category-wise Summary 
+logger.info(f"\n Results by Category:")
+print(f"\n Results by Category:")
 for category, results in all_results.items():
     if not results:
         continue
@@ -566,7 +628,7 @@ for category, results in all_results.items():
         logger.info(f"    Separation:     {separation:.4f} {'✓' if separation > 0.01 else '⚠'}")
         print(f"    Separation:     {separation:.4f} {'✓' if separation > 0.01 else '⚠'}")
 
-# 6. Save Results (حفظ النتائج)
+# 6. Save Results 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 current_run_data = {
     "timestamp": timestamp,
@@ -623,8 +685,8 @@ else:
 # Count total result files
 total_files = len([f for f in os.listdir(output_dir) 
                    if f.startswith("detection_results") and f.endswith(".json")])
-logger.info(f"✓ Total result files: {total_files}")
-print(f"✓ Total result files: {total_files}")
+logger.info(f" Total result files: {total_files}")
+print(f" Total result files: {total_files}")
 
 # Generate training visualization and save with matching number
 logger.info("\n Generating training visualization...")
@@ -690,8 +752,8 @@ try:
         plt.savefig(viz_file, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Training visualization saved to {viz_file}")
-        print(f"✓ Training visualization saved to {viz_file}")
+        logger.info(f" Training visualization saved to {viz_file}")
+        print(f" Training visualization saved to {viz_file}")
     else:
         logger.warning(f"Training log not found at {training_log_path}")
         print(f"Training log not found at {training_log_path}")
@@ -699,7 +761,7 @@ except Exception as e:
     logger.error(f"Failed to generate training visualization: {e}")
     print(f"Failed to generate training visualization: {e}")
 
-# 7. Final Assessment (التقييم النهائي)
+# 7. Final Assessment 
 logger.info("\n" + "="*50)
 print("\n" + "="*50)
 if auc_score is not None:
@@ -720,7 +782,7 @@ if auc_score is not None:
     logger.info(f"  F1-Score: {f1:.4f}")
     print(f"  F1-Score: {f1:.4f}")
 else:
-    logger.warning("⚠ INSUFFICIENT DATA: Need both good and defect samples to evaluate.")
-    print("⚠ INSUFFICIENT DATA: Need both good and defect samples to evaluate.")
+    logger.warning(" INSUFFICIENT DATA: Need both good and defect samples to evaluate.")
+    print(" INSUFFICIENT DATA: Need both good and defect samples to evaluate.")
 logger.info("="*50)
 print("="*50)

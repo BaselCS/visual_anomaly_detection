@@ -8,16 +8,39 @@ import os
 import shutil
 from pathlib import Path
 
+
+DATA_DIR = Path("data")
+TRAIN_DIR = DATA_DIR / "train"
+TEST_DIR = DATA_DIR / "test"
+SEPARATOR = "=" * 50
+
+
+def discover_category_dirs() -> list[Path]:
+    return [
+        d for d in DATA_DIR.iterdir()
+        if d.is_dir() and d.name not in ["train", "test", "zip"]
+    ]
+
+
+def copy_images(image_files: list[Path], target_dir: Path, name_builder) -> int:
+    moved = 0
+    for idx, image_path in enumerate(sorted(image_files), start=1):
+        new_path = target_dir / name_builder(idx, image_path)
+        shutil.copy2(image_path, new_path)
+        moved += 1
+    return moved
+
+
+def print_summary(title: str, total_moved: int, target_dir: Path) -> None:
+    print(f"\n{SEPARATOR}")
+    print(f"Total {title} images moved: {total_moved}")
+    print(f"New location: {target_dir.absolute()}")
+    print(SEPARATOR)
+
 def reorganize_training_data():
     """Move all training images to data/train with category prefixes."""
-    
-    new_train_dir = Path("data/train")
-    new_train_dir.mkdir(exist_ok=True)
-    
-    # Find all category directories (exclude 'train', 'test', 'zip')
-    data_dir = Path("data")
-    categories = [d for d in data_dir.iterdir() 
-                  if d.is_dir() and d.name not in ["train", "test", "zip"]]
+    TRAIN_DIR.mkdir(exist_ok=True)
+    categories = discover_category_dirs()
     
     total_moved = 0
     
@@ -29,32 +52,24 @@ def reorganize_training_data():
             print(f"Skipping {category_name}: no train directory found")
             continue
         
-        # Find all PNG files recursively in the old train directory    
         image_files = list(old_train_dir.rglob("*.png"))
         print(f"\nProcessing {category_name} train: {len(image_files)} images")
-        
-        
-        for idx, image_path in enumerate(sorted(image_files), start=1):
-            new_filename = f"{category_name}_{idx:03d}.png"
-            new_path = new_train_dir / new_filename
-            
-            shutil.copy2(image_path, new_path)
-            total_moved += 1
+
+        total_moved += copy_images(
+            image_files,
+            TRAIN_DIR,
+            lambda idx, _image_path: f"{category_name}_{idx:03d}.png",
+        )
         
         print(f"  Moved {len(image_files)} images from {category_name}")
-    
-    print(f"\n{'='*50}")
-    print(f"Total train images moved: {total_moved}")
-    print(f"New location: {new_train_dir.absolute()}")
-    print(f"{'='*50}")
+
+    print_summary("train", total_moved, TRAIN_DIR)
     
     return categories
 
 def reorganize_test_data(categories):
     """Move all test images to data/test with category and test type prefixes."""
-    
-    new_test_dir = Path("data/test")
-    new_test_dir.mkdir(exist_ok=True)
+    TEST_DIR.mkdir(exist_ok=True)
     
     total_moved = 0
     
@@ -76,23 +91,16 @@ def reorganize_test_data(categories):
             image_files = list(test_type_dir.glob("*.png"))
             
             print(f"\nProcessing {category_name}/{test_type_name}: {len(image_files)} images")
-            
-            # Move and rename each image
-            for idx, image_path in enumerate(sorted(image_files), start=1):
-                # Create new filename with category and test type prefix
-                new_filename = f"{category_name}_{test_type_name}_{idx:04d}.png"
-                new_path = new_test_dir / new_filename
-                
-                # Move the file
-                shutil.copy2(image_path, new_path)
-                total_moved += 1
+
+            total_moved += copy_images(
+                image_files,
+                TEST_DIR,
+                lambda idx, _image_path: f"{category_name}_{test_type_name}_{idx:04d}.png",
+            )
             
             print(f"  Moved {len(image_files)} images from {category_name}/{test_type_name}")
-    
-    print(f"\n{'='*50}")
-    print(f"Total test images moved: {total_moved}")
-    print(f"New location: {new_test_dir.absolute()}")
-    print(f"{'='*50}")
+
+    print_summary("test", total_moved, TEST_DIR)
 
 def cleanup_old_directories(categories):
     """Delete old train and test subdirectories."""

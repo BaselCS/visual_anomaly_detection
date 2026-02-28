@@ -14,6 +14,38 @@ from datetime import datetime
 import logging
 import matplotlib.pyplot as plt
 
+def get_next_train_dir(base_dir="trained_models"):
+    """Find the next available trainX directory"""
+    os.makedirs(base_dir, exist_ok=True)
+    train_num = 1
+    while os.path.exists(os.path.join(base_dir, f"train{train_num}")):
+        train_num += 1
+    return os.path.join(base_dir, f"train{train_num}")
+
+DEFAULT_CONFIG = {
+    "categories": ["bottle", "capsule", "pill", "toothbrush"],
+    "use_data_augmentation": False,  # Set to True to enable category-specific data augmentation
+    "epochs": 120,
+    "batch_size": 2,                  # Optimized for 3060 12GB
+    "gradient_accumulation_steps": 4, # Effective batch size = 2 * 4 = 8
+    "learning_rate": 1e-4,
+    "weight_decay": 1e-2,
+    "max_grad_norm": 1.0,             # Gradient clipping to prevent explosion
+    "lr_scheduler": "cosine",         # Learning rate decay
+    "lr_warmup_steps": 100,           # Number of warmup steps for learning rate scheduler
+    "lr_eta_min": 1e-6,
+    "save_every_n_epochs": 5,
+    "save_log_every_n_epochs": 5,
+    "output_dir": get_next_train_dir("trained_models"),
+    "image_size": 512,
+    "train_split": 0.9,               # 90% training, 10% validation split 
+    "seed": 999,
+    "early_stop_patience": 20,     # Stop if no improvement for x epochs
+    "early_stop_min_delta": 1e-4,
+    "min_epochs_before_early_stop": 20,
+    "num_workers": 2,              # number of subprocesses for data loading, adjust based on CPU cores and memory, Windows users may want to set this to 0 for compatibility
+}
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -25,35 +57,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def get_next_train_dir(base_dir="trained_models"):
-    """Find the next available trainX directory"""
-    os.makedirs(base_dir, exist_ok=True)
-    train_num = 1
-    while os.path.exists(os.path.join(base_dir, f"train{train_num}")):
-        train_num += 1
-    return os.path.join(base_dir, f"train{train_num}")
 
-config = {
-    "categories": ["bottle", "capsule", "pill", "toothbrush"],
-    "epochs": 120,
-    "batch_size": 2,  # Optimized for RTX 3060
-    "gradient_accumulation_steps": 4,  # Effective batch size = 2 * 4 = 8
-    "learning_rate": 1e-4,
-    "weight_decay": 1e-2,
-    "max_grad_norm": 1.0,  # Gradient clipping to prevent explosion
-    "lr_scheduler": "cosine",  # Learning rate decay
-    "lr_warmup_steps": 100,
-    "lr_eta_min": 1e-6,
-    "save_every_n_epochs": 5,
-    "save_log_every_n_epochs": 1,  
-    "output_dir": get_next_train_dir("trained_models"),
-    "image_size": 512,
-    "train_split": 0.9,
-    "seed": 42,
-    "early_stop_patience": 20,  # Stop if no improvement for x epochs
-    "early_stop_min_delta": 1e-4,
-    "min_epochs_before_early_stop": 20,
-}
+def out(message: str, level: str = "info") -> None:
+    if level == "error":
+        logger.error(message)
+    elif level == "warning":
+        logger.warning(message)
+    else:
+        logger.info(message)
+    print(message)
+
+def load_config() -> dict:
+    return dict(DEFAULT_CONFIG)
+
+
+config = load_config()
 
 
 def set_seed(seed):
@@ -62,6 +80,11 @@ def set_seed(seed):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8") # For reproducibility in CUDA operations
+    try:
+        torch.use_deterministic_algorithms(True)
+    except Exception:
+        pass
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
@@ -73,30 +96,26 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 model_id = "runwayml/stable-diffusion-v1-5"
 
 logger.info("Training Configuration:")
-print("Training Configuration:")
+out("Training Configuration:")
 for key, value in config.items():
-    logger.info(f"  {key}: {value}")
-    print(f"  {key}: {value}")
-logger.info("="*50)
-print("="*50)
+    out(f"  {key}: {value}")
+out("=" * 50)
 
 os.makedirs(config["output_dir"], exist_ok=True)
 
-logger.info("\nLoading Stable Diffusion model...")
-print("\nLoading Stable Diffusion model...")
+out("\nLoading Stable Diffusion model...")
 try:
-    # Use local_files_only=True to prevent hanging on network issues
     pipe = StableDiffusionPipeline.from_pretrained(
         model_id, 
         torch_dtype=torch.float16,
-        safety_checker=None,  # Disable to save memory
+        safety_checker=None,  # NSFW safety, add memory overhead we don't need
         requires_safety_checker=False,
         local_files_only=True  # Prevent network hangs
     ).to(device)
+
 except Exception as e:
-    logger.error(f"Failed to load model in offline mode: {e}")
-    print(f"Failed to load model in offline mode: {e}")
-    print("Trying online mode (this may take time)...")
+    out(f"Failed to load model in offline mode: {e}", level="error")
+    out("Trying online mode (this may take time)...")
     pipe = StableDiffusionPipeline.from_pretrained(
         model_id, 
         torch_dtype=torch.float16,
@@ -113,12 +132,10 @@ unet = pipe.unet                         # U-Net
 vae.requires_grad_(False)
 text_encoder.requires_grad_(False)
 
-logger.info("✓ Model loaded successfully")
-print("✓ Model loaded successfully")
+out("✓ Model loaded successfully")
 
 # 4. Apply LoRA 
-logger.info("\nApplying LoRA configuration...")
-print("\nApplying LoRA configuration...")
+out("\nApplying LoRA configuration...")
 lora_config = LoraConfig(
     r=16,               #rank
     lora_alpha=32,
@@ -129,91 +146,109 @@ lora_config = LoraConfig(
 
 
 unet = get_peft_model(unet, lora_config)
-logger.info("LoRA applied:")
-print("LoRA applied:")
+out("LoRA applied:")
 unet.print_trainable_parameters()
 
 
 # 5. Data Loader 
-logger.info("\nPreparing dataset...")
-print("\nPreparing dataset...")
-from torchvision import transforms
+out("\nPreparing dataset...")
 
 # Data augmentation
 def get_transforms(category, image_size=512):
     """Get category-specific data augmentation transforms"""
-    
-    if category == "bottle":
-        return transforms.Compose([
-            transforms.Resize((image_size, image_size)),
-            transforms.RandomRotation(degrees=8),
-            transforms.RandomHorizontalFlip(p=0.3),
-            transforms.RandomAffine(degrees=0, translate=(0.03, 0.03)),
-            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.05),
-            transforms.RandomAdjustSharpness(sharpness_factor=2, p=0.2),
+    category_params = {
+        "bottle": {
+            "rotation": 8,
+            "hflip": 0.3,
+            "vflip": 0.0,
+            "translate": 0.03,
+            "jitter": (0.1, 0.1, 0.05),
+            "sharpness_p": 0.2,
+        },
+        "capsule": {
+            "rotation": 30,
+            "hflip": 0.5,
+            "vflip": 0.3,
+            "translate": 0.05,
+            "jitter": (0.15, 0.15, 0.1),
+            "sharpness_p": 0.25,
+        },
+        "pill": {
+            "rotation": 180,
+            "hflip": 0.5,
+            "vflip": 0.5,
+            "translate": 0.06,
+            "jitter": (0.12, 0.12, 0.1),
+            "sharpness_p": 0.2,
+        },
+        "toothbrush": {
+            "rotation": 5,
+            "hflip": 0.4,
+            "vflip": 0.0,
+            "translate": 0.04,
+            "jitter": (0.1, 0.1, 0.08),
+            "sharpness_p": 0.15,
+        },
+        "default": {
+            "rotation": 15,
+            "hflip": 0.3,
+            "vflip": 0.0,
+            "translate": 0.05,
+            "jitter": (0.1, 0.1, 0.1),
+            "sharpness_p": 0.2,
+        },
+    }
+
+    params = category_params.get(category)
+    if params is None:
+        out(
+            f"Warning: {'🚩' * 20} No specific transforms for category '{category}', using default.",
+            level="warning",
+        )
+        params = category_params["default"]
+
+    augmentation_steps = [
+        transforms.Resize((image_size, image_size)),
+        transforms.RandomRotation(degrees=params["rotation"]),
+        transforms.RandomHorizontalFlip(p=params["hflip"]),
+    ]
+
+    if params["vflip"] > 0:
+        augmentation_steps.append(transforms.RandomVerticalFlip(p=params["vflip"]))
+
+    brightness, contrast, saturation = params["jitter"]
+    augmentation_steps.extend(
+        [
+            transforms.RandomAffine(degrees=0, translate=(params["translate"], params["translate"])),
+            transforms.ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation),
+            transforms.RandomAdjustSharpness(sharpness_factor=2, p=params["sharpness_p"]),
             transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5])
-        ])
-    
-    elif category == "capsule":
-        return transforms.Compose([
+            transforms.Normalize([0.5], [0.5]),
+        ]
+    )
+
+    return transforms.Compose(augmentation_steps)
+
+
+def get_basic_transform(image_size=512):
+    return transforms.Compose(
+        [
             transforms.Resize((image_size, image_size)),
-            transforms.RandomRotation(degrees=30),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomVerticalFlip(p=0.3),
-            transforms.RandomAffine(degrees=0, translate=(0.05, 0.05)),
-            transforms.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.1),
-            transforms.RandomAdjustSharpness(sharpness_factor=2, p=0.25),
             transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5])
-        ])
-    
-    elif category == "pill":
-        return transforms.Compose([
-            transforms.Resize((image_size, image_size)),
-            transforms.RandomRotation(degrees=180),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomVerticalFlip(p=0.5),
-            transforms.RandomAffine(degrees=0, translate=(0.06, 0.06)),
-            transforms.ColorJitter(brightness=0.12, contrast=0.12, saturation=0.1),
-            transforms.RandomAdjustSharpness(sharpness_factor=2, p=0.2),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5])
-        ])
-    
-    elif category == "toothbrush":
-        return transforms.Compose([
-            transforms.Resize((image_size, image_size)),
-            transforms.RandomRotation(degrees=5),
-            transforms.RandomHorizontalFlip(p=0.4),
-            transforms.RandomAffine(degrees=0, translate=(0.04, 0.04)),
-            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.08),
-            transforms.RandomAdjustSharpness(sharpness_factor=2, p=0.15),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5])
-        ])
-    
-    else:
-        # Default transforms for unknown categories
-        print(f"Warning: No specific transforms for category '{category}', using default.")
-        logger.warning(f"Warning: {'🚩'*20} No specific transforms for category '{category}', using default.")
-        return transforms.Compose([
-            transforms.Resize((image_size, image_size)),
-            transforms.RandomRotation(degrees=15),
-            transforms.RandomHorizontalFlip(p=0.3),
-            transforms.RandomAffine(degrees=0, translate=(0.05, 0.05)),
-            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),
-            transforms.RandomAdjustSharpness(sharpness_factor=2, p=0.2),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5])
-        ])
+            transforms.Normalize([0.5], [0.5]),
+        ]
+    )
 
 class AnomalyDataset(Dataset):
-    """Dataset for training on multiple product categories from flat directory"""
-    def __init__(self, train_dir="data/train", categories=None, image_size=512):
+    """
+        Custom dataset loader that reads images from a flat directory, extracts category from filename, and applies category-specific data augmentation.
+    """
+    def __init__(self, train_dir="data/train", categories=None, image_size=512, use_data_augmentation=True):
         self.image_size = image_size
+        self.use_data_augmentation = use_data_augmentation
         self.samples = []
         self.category_transforms = {}  # Cache transforms per category
+        self.basic_transform = get_basic_transform(self.image_size)
         
         if not os.path.exists(train_dir):
             raise ValueError(f"Training directory {train_dir} does not exist!")
@@ -237,11 +272,9 @@ class AnomalyDataset(Dataset):
                     self.samples.append((img_path, prompt, category))
                     category_counts[category] = category_counts.get(category, 0) + 1
         
-        logger.info(f"Loaded {len(self.samples)} training images from {len(category_counts)} categories")
-        print(f"Loaded {len(self.samples)} training images from {len(category_counts)} categories")
+        out(f"Loaded {len(self.samples)} training images from {len(category_counts)} categories")
         for cat, count in sorted(category_counts.items()):
-            logger.info(f"  {cat}: {count} images")
-            print(f"  {cat}: {count} images")
+            out(f"  {cat}: {count} images")
 
     def __len__(self):
         return len(self.samples)
@@ -250,18 +283,19 @@ class AnomalyDataset(Dataset):
         img_path, prompt, category = self.samples[idx]
         try:
             image = Image.open(img_path).convert("RGB")
-            
-            # Get category-specific transform (cache it)
-            if category not in self.category_transforms:
-                self.category_transforms[category] = get_transforms(category, self.image_size)
-            
-            transform = self.category_transforms[category]
+
+            if self.use_data_augmentation:
+                if category not in self.category_transforms:
+                    self.category_transforms[category] = get_transforms(category, self.image_size)
+                transform = self.category_transforms[category]
+            else:
+                transform = self.basic_transform
+
             image = transform(image)
             
             return {"pixel_values": image, "prompt": prompt, "category": category}
         except Exception as e:
-            logger.error(f"Error loading {img_path}: {e}")
-            print(f"Error loading {img_path}: {e}")
+            out(f"Error loading {img_path}: {e}", level="error")
             # Return next valid sample
             return self.__getitem__((idx + 1) % len(self.samples))
 
@@ -270,10 +304,11 @@ class AnomalyDataset(Dataset):
 full_dataset = AnomalyDataset(
     train_dir="data/train", 
     categories=config["categories"], 
-    image_size=config["image_size"]
+    image_size=config["image_size"],
+    use_data_augmentation=config["use_data_augmentation"],
 )
 
-# Stratified split into train/validation to preserve category distribution
+# Create train/validation split with category balance
 rng = random.Random(config["seed"])
 category_to_indices = {}
 for idx, (_, _, category) in enumerate(full_dataset.samples):
@@ -289,7 +324,7 @@ for category, indices in sorted(category_to_indices.items()):
     train_indices.extend(indices[:split_at])
     val_indices.extend(indices[split_at:])
 
-# Fallback safety in case of tiny datasets
+# Fallback safety in case of tiny datasets in Validation set - ensure at least 1 sample in validation if possible
 if len(val_indices) == 0 and len(train_indices) > 1:
     val_indices.append(train_indices.pop())
 
@@ -300,7 +335,7 @@ train_size = len(train_indices)
 val_size = len(val_indices)
 
 logger.info(f"\nDataset split: {train_size} training, {val_size} validation")
-print(f"\nDataset split: {train_size} training, {val_size} validation")
+out(f"\nDataset split: {train_size} training, {val_size} validation")
 
 # Create weighted sampler for category-balanced training batches
 train_category_counts = {}
@@ -317,14 +352,15 @@ weighted_sampler = WeightedRandomSampler(
     weights=torch.tensor(sample_weights, dtype=torch.double),
     num_samples=len(sample_weights),
     replacement=True,
+    generator=torch.Generator().manual_seed(config["seed"]),
 )
 
-# Create dataloaders
+# pytorch DataLoaders with weighted sampler for training and simple sequential sampling for validation
 train_dataloader = DataLoader(
     train_dataset, 
     batch_size=config["batch_size"], 
     sampler=weighted_sampler,
-    num_workers=2,
+    num_workers=config["num_workers"],
     pin_memory=True
 )
 
@@ -332,9 +368,11 @@ val_dataloader = DataLoader(
     val_dataset, 
     batch_size=config["batch_size"], 
     shuffle=False,
-    num_workers=2,
+    num_workers=config["num_workers"],
     pin_memory=True
 )
+
+
 # 6. Validation Function
 def validate(unet, val_dataloader, vae, text_encoder, tokenizer, pipe, device):
     """Run validation and return average loss"""
@@ -350,8 +388,20 @@ def validate(unet, val_dataloader, vae, text_encoder, tokenizer, pipe, device):
                 latents = vae.encode(pixel_values).latent_dist.sample() * 0.18215 # Scaling factor for Stable Diffusion latent space
                 
                 # Sample noise
-                noise = torch.randn_like(latents)
-                timesteps = torch.randint(0, 1000, (latents.shape[0],), device=device).long()
+                noise = torch.randn(
+                    latents.shape,
+                    device=device,
+                    dtype=latents.dtype,
+                    generator=validation_noise_generator,
+                )
+                # how much noise to add based on random timestep
+                timesteps = torch.randint(
+                    0,
+                    1000,
+                    (latents.shape[0],),
+                    device=device,
+                    generator=validation_noise_generator,
+                ).long()
                 noisy_latents = pipe.scheduler.add_noise(latents, noise, timesteps)
                 
                 # Get text embeddings
@@ -377,6 +427,8 @@ def validate(unet, val_dataloader, vae, text_encoder, tokenizer, pipe, device):
     return sum(val_losses) / len(val_losses) if val_losses else float('inf')
 
 # 7. Training Loop 
+
+# only optimizing LoRA parameters
 optimizer = torch.optim.AdamW(
     unet.parameters(),
     lr=config["learning_rate"],
@@ -402,6 +454,11 @@ def lr_lambda(current_update):
 
 scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda)
 
+training_noise_generator = torch.Generator(device=device)
+training_noise_generator.manual_seed(config["seed"] + 1000)
+validation_noise_generator = torch.Generator(device=device)
+validation_noise_generator.manual_seed(config["seed"] + 2000)
+
 unet.train()
 
 # Training metrics
@@ -425,6 +482,7 @@ print("\n" + "="*50)
 
 global_step = 0
 epochs_without_improvement = 0
+# Main training loop with validation and early stopping based on validation loss improvement
 for epoch in range(config["epochs"]):
     epoch_losses = []
     progress_bar = tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{config['epochs']}")
@@ -437,8 +495,19 @@ for epoch in range(config["epochs"]):
                 latents = vae.encode(pixel_values).latent_dist.sample() * 0.18215
             
             # Sample noise
-            noise = torch.randn_like(latents)
-            timesteps = torch.randint(0, 1000, (latents.shape[0],), device=device).long()
+            noise = torch.randn(
+                latents.shape,
+                device=device,
+                dtype=latents.dtype,
+                generator=training_noise_generator,
+            )
+            timesteps = torch.randint(
+                0,
+                1000,
+                (latents.shape[0],),
+                device=device,
+                generator=training_noise_generator,
+            ).long()
             noisy_latents = pipe.scheduler.add_noise(latents, noise, timesteps)
             
             # text embedding
@@ -562,8 +631,8 @@ logger.info("\n" + "="*50)
 print("\n" + "="*50)
 logger.info("Training completed!")
 print("Training completed!")
-logger.info(f"\n📊 Training Summary:")
-print(f"\n📊 Training Summary:")
+logger.info(f"\n Training Summary:")
+print(f"\n Training Summary:")
 logger.info(f"  Best Epoch: {training_log['best_epoch']}")
 print(f"  Best Epoch: {training_log['best_epoch']}")
 logger.info(f"    Train Loss: {training_log['best_train_loss']:.4f}")
@@ -576,9 +645,10 @@ logger.info(f"    Train Loss: {avg_train_loss:.4f}")
 print(f"    Train Loss: {avg_train_loss:.4f}")
 logger.info(f"    Val Loss: {avg_val_loss:.4f}")
 print(f"    Val Loss: {avg_val_loss:.4f}")
+
 if training_log['best_val_loss'] < avg_val_loss:
-    logger.warning(f"  ⚠ Final model has higher validation loss - use 'best_model' directory instead!")
-    print(f"  ⚠ Final model has higher validation loss - use 'best_model' directory instead!")
+    logger.warning(f"  Final model has higher validation loss - use 'best_model' directory instead!")
+    print(f"  Final model has higher validation loss - use 'best_model' directory instead!")
 
 # 7. Save Final Model 
 logger.info("\nSaving final trained model...")
@@ -592,10 +662,8 @@ training_log["end_time"] = datetime.now().isoformat()
 with open(os.path.join(config["output_dir"], "training_log.json"), "w") as f:
     json.dump(training_log, f, indent=2)
 
-logger.info(f"✓ Model saved to {final_model_dir}")
-print(f"✓ Model saved to {final_model_dir}")
-logger.info(f"✓ Training log saved to {os.path.join(config['output_dir'], 'training_log.json')}")
-print(f"✓ Training log saved to {os.path.join(config['output_dir'], 'training_log.json')}")
+logger.info(f"Model saved to {final_model_dir}")
+print(f"Model saved to {final_model_dir}")
 
 # 8. Generate Test Samples 
 logger.info("\nGenerating test samples...")
@@ -612,11 +680,11 @@ for category in config["categories"]:
         output_image = pipe(test_prompt, num_inference_steps=30).images[0]
         output_path = os.path.join(test_output_dir, f"{category}_sample.png")
         output_image.save(output_path)
-        logger.info(f"✓ Generated test sample for {category}")
-        print(f"✓ Generated test sample for {category}")
+        logger.info(f"Generated test sample for {category}")
+        print(f"Generated test sample for {category}")
     except Exception as e:
-        logger.error(f"✗ Failed to generate sample for {category}: {e}")
-        print(f"✗ Failed to generate sample for {category}: {e}")
+        logger.error(f"Failed to generate sample for {category}: {e}")
+        print(f" Failed to generate sample for {category}: {e}")
 
 # 9. Plot Training and Validation Metrics
 logger.info("\nGenerating training plots...")
@@ -687,6 +755,3 @@ logger.info("All done! You can now run anomal_score.py to test the model.")
 print("All done! You can now run anomal_score.py to test the model.")
 logger.info("="*50)
 print("="*50)
-
-#  شغل
-# uv run python generate_synthetic_data.py --categories bottle capsule pill toothbrush --ratio 0.3 --strength 0.35
