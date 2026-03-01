@@ -1,0 +1,2183 @@
+{
+  "timestamp": "20260301_124641",
+  "run_directory": "trained_models/train9",
+  "model_type": "best",
+  "model_path": "trained_models/train9/best_model",
+  "evaluation_seed": 999,
+  "calibration_fraction": 0.3,
+  "per_category_thresholds": {
+    "bottle": 0.07020626962184906,
+    "capsule": 0.029608922079205513,
+    "pill": 0.0364564023911953,
+    "toothbrush": 0.04807382822036743
+  },
+  "calibration_summary": {
+    "bottle": {
+      "direction": "higher_is_defect",
+      "calibration_auc": 0.7543859649122807,
+      "split_note": null,
+      "calibration_count": 25,
+      "evaluation_count": 58
+    },
+    "capsule": {
+      "direction": "higher_is_defect",
+      "calibration_auc": 0.6796536796536797,
+      "split_note": null,
+      "calibration_count": 40,
+      "evaluation_count": 92
+    },
+    "pill": {
+      "direction": "higher_is_defect",
+      "calibration_auc": 0.7291666666666667,
+      "split_note": null,
+      "calibration_count": 50,
+      "evaluation_count": 117
+    },
+    "toothbrush": {
+      "direction": "higher_is_defect",
+      "calibration_auc": 0.6388888888888888,
+      "split_note": null,
+      "calibration_count": 13,
+      "evaluation_count": 29
+    }
+  },
+  "optimal_threshold": 0.046086355578154325,
+  "metrics": {
+    "auc_roc": 0.5207589285714285,
+    "accuracy": 0.6013513513513513,
+    "balanced_accuracy": 0.5967261904761905,
+    "precision": 0.8630952380952381,
+    "recall": 0.6041666666666666,
+    "f1_score": 0.7107843137254902
+  },
+  "results": {
+    "bottle": {
+      "bottle/broken_large/bottle_broken_large_0001.png": {
+        "type": "broken_large",
+        "score": 0.05931432917714119,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0002.png": {
+        "type": "broken_large",
+        "score": 0.07003430277109146,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0003.png": {
+        "type": "broken_large",
+        "score": 0.06513902544975281,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0004.png": {
+        "type": "broken_large",
+        "score": 0.07307416945695877,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0005.png": {
+        "type": "broken_large",
+        "score": 0.07175770401954651,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0006.png": {
+        "type": "broken_large",
+        "score": 0.06453216820955276,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0007.png": {
+        "type": "broken_large",
+        "score": 0.07199911773204803,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0008.png": {
+        "type": "broken_large",
+        "score": 0.064337819814682,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0009.png": {
+        "type": "broken_large",
+        "score": 0.07207302749156952,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0010.png": {
+        "type": "broken_large",
+        "score": 0.07235583662986755,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0011.png": {
+        "type": "broken_large",
+        "score": 0.06355999410152435,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0012.png": {
+        "type": "broken_large",
+        "score": 0.07794452458620071,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0013.png": {
+        "type": "broken_large",
+        "score": 0.07254389673471451,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0014.png": {
+        "type": "broken_large",
+        "score": 0.07456883043050766,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0015.png": {
+        "type": "broken_large",
+        "score": 0.07296548038721085,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0016.png": {
+        "type": "broken_large",
+        "score": 0.07195782661437988,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0017.png": {
+        "type": "broken_large",
+        "score": 0.0656665712594986,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0018.png": {
+        "type": "broken_large",
+        "score": 0.06642107665538788,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0019.png": {
+        "type": "broken_large",
+        "score": 0.07161197811365128,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0020.png": {
+        "type": "broken_large",
+        "score": 0.07307782024145126,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0001.png": {
+        "type": "broken_small",
+        "score": 0.07148616760969162,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0002.png": {
+        "type": "broken_small",
+        "score": 0.0737137421965599,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0003.png": {
+        "type": "broken_small",
+        "score": 0.07595004141330719,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0004.png": {
+        "type": "broken_small",
+        "score": 0.07159525901079178,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0005.png": {
+        "type": "broken_small",
+        "score": 0.06967931985855103,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0006.png": {
+        "type": "broken_small",
+        "score": 0.07095670700073242,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0007.png": {
+        "type": "broken_small",
+        "score": 0.07523508369922638,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0008.png": {
+        "type": "broken_small",
+        "score": 0.06416182965040207,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0009.png": {
+        "type": "broken_small",
+        "score": 0.06643545627593994,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0010.png": {
+        "type": "broken_small",
+        "score": 0.07164798676967621,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0011.png": {
+        "type": "broken_small",
+        "score": 0.08464368432760239,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0012.png": {
+        "type": "broken_small",
+        "score": 0.07214965671300888,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0013.png": {
+        "type": "broken_small",
+        "score": 0.07085612416267395,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0014.png": {
+        "type": "broken_small",
+        "score": 0.06296038627624512,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0015.png": {
+        "type": "broken_small",
+        "score": 0.05947435274720192,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0016.png": {
+        "type": "broken_small",
+        "score": 0.0762641653418541,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0017.png": {
+        "type": "broken_small",
+        "score": 0.06428781151771545,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0018.png": {
+        "type": "broken_small",
+        "score": 0.07248865813016891,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0019.png": {
+        "type": "broken_small",
+        "score": 0.08319487422704697,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0020.png": {
+        "type": "broken_small",
+        "score": 0.0687752366065979,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0021.png": {
+        "type": "broken_small",
+        "score": 0.07341864705085754,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0022.png": {
+        "type": "broken_small",
+        "score": 0.06163186579942703,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0001.png": {
+        "type": "contamination",
+        "score": 0.06372235715389252,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0002.png": {
+        "type": "contamination",
+        "score": 0.07053396850824356,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0003.png": {
+        "type": "contamination",
+        "score": 0.07388389110565186,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0004.png": {
+        "type": "contamination",
+        "score": 0.06589577347040176,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0005.png": {
+        "type": "contamination",
+        "score": 0.05894763395190239,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0006.png": {
+        "type": "contamination",
+        "score": 0.06087053194642067,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0007.png": {
+        "type": "contamination",
+        "score": 0.05814633518457413,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0008.png": {
+        "type": "contamination",
+        "score": 0.0637676864862442,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0009.png": {
+        "type": "contamination",
+        "score": 0.07104256749153137,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0010.png": {
+        "type": "contamination",
+        "score": 0.06514526903629303,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0011.png": {
+        "type": "contamination",
+        "score": 0.060966331511735916,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0012.png": {
+        "type": "contamination",
+        "score": 0.05605362728238106,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0013.png": {
+        "type": "contamination",
+        "score": 0.06712645292282104,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0014.png": {
+        "type": "contamination",
+        "score": 0.05442911013960838,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0015.png": {
+        "type": "contamination",
+        "score": 0.06284811347723007,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0016.png": {
+        "type": "contamination",
+        "score": 0.0632656067609787,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0017.png": {
+        "type": "contamination",
+        "score": 0.08403893560171127,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0018.png": {
+        "type": "contamination",
+        "score": 0.06830044090747833,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0019.png": {
+        "type": "contamination",
+        "score": 0.07738090306520462,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0020.png": {
+        "type": "contamination",
+        "score": 0.07758377492427826,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0021.png": {
+        "type": "contamination",
+        "score": 0.07020626962184906,
+        "is_defect": true
+      },
+      "bottle/good/bottle_good_0001.png": {
+        "type": "good",
+        "score": 0.061065029352903366,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0002.png": {
+        "type": "good",
+        "score": 0.0565476231276989,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0003.png": {
+        "type": "good",
+        "score": 0.05395756661891937,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0004.png": {
+        "type": "good",
+        "score": 0.06988834589719772,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0005.png": {
+        "type": "good",
+        "score": 0.0629066675901413,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0006.png": {
+        "type": "good",
+        "score": 0.05531850829720497,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0007.png": {
+        "type": "good",
+        "score": 0.06759747862815857,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0008.png": {
+        "type": "good",
+        "score": 0.0652787908911705,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0009.png": {
+        "type": "good",
+        "score": 0.056351158767938614,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0010.png": {
+        "type": "good",
+        "score": 0.06226488575339317,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0011.png": {
+        "type": "good",
+        "score": 0.06678490340709686,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0012.png": {
+        "type": "good",
+        "score": 0.06378679722547531,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0013.png": {
+        "type": "good",
+        "score": 0.08290228992700577,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0014.png": {
+        "type": "good",
+        "score": 0.06015326827764511,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0015.png": {
+        "type": "good",
+        "score": 0.07507985830307007,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0016.png": {
+        "type": "good",
+        "score": 0.06713595241308212,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0017.png": {
+        "type": "good",
+        "score": 0.0625762939453125,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0018.png": {
+        "type": "good",
+        "score": 0.06390213966369629,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0019.png": {
+        "type": "good",
+        "score": 0.05932929739356041,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0020.png": {
+        "type": "good",
+        "score": 0.06123089790344238,
+        "is_defect": false
+      }
+    },
+    "capsule": {
+      "capsule/crack/capsule_crack_0001.png": {
+        "type": "crack",
+        "score": 0.036375992000103,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0002.png": {
+        "type": "crack",
+        "score": 0.0386640727519989,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0003.png": {
+        "type": "crack",
+        "score": 0.04385148733854294,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0004.png": {
+        "type": "crack",
+        "score": 0.03470478951931,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0005.png": {
+        "type": "crack",
+        "score": 0.04728589579463005,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0006.png": {
+        "type": "crack",
+        "score": 0.032535821199417114,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0007.png": {
+        "type": "crack",
+        "score": 0.03524385765194893,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0008.png": {
+        "type": "crack",
+        "score": 0.03960809111595154,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0009.png": {
+        "type": "crack",
+        "score": 0.030856437981128693,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0010.png": {
+        "type": "crack",
+        "score": 0.05216231942176819,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0011.png": {
+        "type": "crack",
+        "score": 0.029608922079205513,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0012.png": {
+        "type": "crack",
+        "score": 0.035863861441612244,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0013.png": {
+        "type": "crack",
+        "score": 0.03599429130554199,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0014.png": {
+        "type": "crack",
+        "score": 0.03288327530026436,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0015.png": {
+        "type": "crack",
+        "score": 0.030346032232046127,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0016.png": {
+        "type": "crack",
+        "score": 0.03637964278459549,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0017.png": {
+        "type": "crack",
+        "score": 0.025019200518727303,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0018.png": {
+        "type": "crack",
+        "score": 0.04476148635149002,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0019.png": {
+        "type": "crack",
+        "score": 0.03031926043331623,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0020.png": {
+        "type": "crack",
+        "score": 0.03829291835427284,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0021.png": {
+        "type": "crack",
+        "score": 0.029337620362639427,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0022.png": {
+        "type": "crack",
+        "score": 0.037902120500802994,
+        "is_defect": true
+      },
+      "capsule/crack/capsule_crack_0023.png": {
+        "type": "crack",
+        "score": 0.034943271428346634,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0001.png": {
+        "type": "faulty_imprint",
+        "score": 0.02556902915239334,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0002.png": {
+        "type": "faulty_imprint",
+        "score": 0.033132974058389664,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0003.png": {
+        "type": "faulty_imprint",
+        "score": 0.03558545932173729,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0004.png": {
+        "type": "faulty_imprint",
+        "score": 0.026880556717514992,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0005.png": {
+        "type": "faulty_imprint",
+        "score": 0.03548228740692139,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0006.png": {
+        "type": "faulty_imprint",
+        "score": 0.028802545741200447,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0007.png": {
+        "type": "faulty_imprint",
+        "score": 0.03225207328796387,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0008.png": {
+        "type": "faulty_imprint",
+        "score": 0.03507828339934349,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0009.png": {
+        "type": "faulty_imprint",
+        "score": 0.03208465501666069,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0010.png": {
+        "type": "faulty_imprint",
+        "score": 0.038840003311634064,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0011.png": {
+        "type": "faulty_imprint",
+        "score": 0.042109113186597824,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0012.png": {
+        "type": "faulty_imprint",
+        "score": 0.03250765800476074,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0013.png": {
+        "type": "faulty_imprint",
+        "score": 0.03671671450138092,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0014.png": {
+        "type": "faulty_imprint",
+        "score": 0.038396988064050674,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0015.png": {
+        "type": "faulty_imprint",
+        "score": 0.03659781441092491,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0016.png": {
+        "type": "faulty_imprint",
+        "score": 0.034491732716560364,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0017.png": {
+        "type": "faulty_imprint",
+        "score": 0.04166044667363167,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0018.png": {
+        "type": "faulty_imprint",
+        "score": 0.03244335949420929,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0019.png": {
+        "type": "faulty_imprint",
+        "score": 0.03436124697327614,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0020.png": {
+        "type": "faulty_imprint",
+        "score": 0.03209258243441582,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0021.png": {
+        "type": "faulty_imprint",
+        "score": 0.04150933772325516,
+        "is_defect": true
+      },
+      "capsule/faulty_imprint/capsule_faulty_imprint_0022.png": {
+        "type": "faulty_imprint",
+        "score": 0.03442273661494255,
+        "is_defect": true
+      },
+      "capsule/good/capsule_good_0001.png": {
+        "type": "good",
+        "score": 0.029416166245937347,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0002.png": {
+        "type": "good",
+        "score": 0.031254567205905914,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0003.png": {
+        "type": "good",
+        "score": 0.02764119952917099,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0004.png": {
+        "type": "good",
+        "score": 0.03155800700187683,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0005.png": {
+        "type": "good",
+        "score": 0.025451602414250374,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0006.png": {
+        "type": "good",
+        "score": 0.03494808450341225,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0007.png": {
+        "type": "good",
+        "score": 0.05750396102666855,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0008.png": {
+        "type": "good",
+        "score": 0.03214859589934349,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0009.png": {
+        "type": "good",
+        "score": 0.025604508817195892,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0010.png": {
+        "type": "good",
+        "score": 0.028347281739115715,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0011.png": {
+        "type": "good",
+        "score": 0.029576217755675316,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0012.png": {
+        "type": "good",
+        "score": 0.030089525505900383,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0013.png": {
+        "type": "good",
+        "score": 0.02570192515850067,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0014.png": {
+        "type": "good",
+        "score": 0.034869980067014694,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0015.png": {
+        "type": "good",
+        "score": 0.03778841719031334,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0016.png": {
+        "type": "good",
+        "score": 0.03139355778694153,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0017.png": {
+        "type": "good",
+        "score": 0.03196346387267113,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0018.png": {
+        "type": "good",
+        "score": 0.03193206712603569,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0019.png": {
+        "type": "good",
+        "score": 0.04088069871068001,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0020.png": {
+        "type": "good",
+        "score": 0.032364729791879654,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0021.png": {
+        "type": "good",
+        "score": 0.027317143976688385,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0022.png": {
+        "type": "good",
+        "score": 0.03574943542480469,
+        "is_defect": false
+      },
+      "capsule/good/capsule_good_0023.png": {
+        "type": "good",
+        "score": 0.03267553821206093,
+        "is_defect": false
+      },
+      "capsule/poke/capsule_poke_0001.png": {
+        "type": "poke",
+        "score": 0.03306923061609268,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0002.png": {
+        "type": "poke",
+        "score": 0.029853472486138344,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0003.png": {
+        "type": "poke",
+        "score": 0.03009875863790512,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0004.png": {
+        "type": "poke",
+        "score": 0.028831595554947853,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0005.png": {
+        "type": "poke",
+        "score": 0.03684188053011894,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0006.png": {
+        "type": "poke",
+        "score": 0.033769700676202774,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0007.png": {
+        "type": "poke",
+        "score": 0.031673453748226166,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0008.png": {
+        "type": "poke",
+        "score": 0.030142635107040405,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0009.png": {
+        "type": "poke",
+        "score": 0.03488335758447647,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0010.png": {
+        "type": "poke",
+        "score": 0.03132172301411629,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0011.png": {
+        "type": "poke",
+        "score": 0.033861905336380005,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0012.png": {
+        "type": "poke",
+        "score": 0.03265801817178726,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0013.png": {
+        "type": "poke",
+        "score": 0.030519947409629822,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0014.png": {
+        "type": "poke",
+        "score": 0.03089396096765995,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0015.png": {
+        "type": "poke",
+        "score": 0.037138015031814575,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0016.png": {
+        "type": "poke",
+        "score": 0.0307916272431612,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0017.png": {
+        "type": "poke",
+        "score": 0.028346480801701546,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0018.png": {
+        "type": "poke",
+        "score": 0.031277358531951904,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0019.png": {
+        "type": "poke",
+        "score": 0.02887772023677826,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0020.png": {
+        "type": "poke",
+        "score": 0.03377137333154678,
+        "is_defect": true
+      },
+      "capsule/poke/capsule_poke_0021.png": {
+        "type": "poke",
+        "score": 0.03539365902543068,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0001.png": {
+        "type": "scratch",
+        "score": 0.03430010750889778,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0002.png": {
+        "type": "scratch",
+        "score": 0.03315436467528343,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0003.png": {
+        "type": "scratch",
+        "score": 0.03310099244117737,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0004.png": {
+        "type": "scratch",
+        "score": 0.029625898227095604,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0005.png": {
+        "type": "scratch",
+        "score": 0.04588162899017334,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0006.png": {
+        "type": "scratch",
+        "score": 0.02888520620763302,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0007.png": {
+        "type": "scratch",
+        "score": 0.030988750979304314,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0008.png": {
+        "type": "scratch",
+        "score": 0.031332217156887054,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0009.png": {
+        "type": "scratch",
+        "score": 0.031787678599357605,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0010.png": {
+        "type": "scratch",
+        "score": 0.03318910300731659,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0011.png": {
+        "type": "scratch",
+        "score": 0.03112892434000969,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0012.png": {
+        "type": "scratch",
+        "score": 0.03539858013391495,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0013.png": {
+        "type": "scratch",
+        "score": 0.037601735442876816,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0014.png": {
+        "type": "scratch",
+        "score": 0.034834299236536026,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0015.png": {
+        "type": "scratch",
+        "score": 0.027019500732421875,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0016.png": {
+        "type": "scratch",
+        "score": 0.030271440744400024,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0017.png": {
+        "type": "scratch",
+        "score": 0.03683026134967804,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0018.png": {
+        "type": "scratch",
+        "score": 0.03323991596698761,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0019.png": {
+        "type": "scratch",
+        "score": 0.040449339896440506,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0020.png": {
+        "type": "scratch",
+        "score": 0.041172802448272705,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0021.png": {
+        "type": "scratch",
+        "score": 0.043858617544174194,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0022.png": {
+        "type": "scratch",
+        "score": 0.05074167251586914,
+        "is_defect": true
+      },
+      "capsule/scratch/capsule_scratch_0023.png": {
+        "type": "scratch",
+        "score": 0.033896949142217636,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0001.png": {
+        "type": "squeeze",
+        "score": 0.03133807331323624,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0002.png": {
+        "type": "squeeze",
+        "score": 0.03487709164619446,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0003.png": {
+        "type": "squeeze",
+        "score": 0.032373860478401184,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0004.png": {
+        "type": "squeeze",
+        "score": 0.0356171652674675,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0005.png": {
+        "type": "squeeze",
+        "score": 0.03386586904525757,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0006.png": {
+        "type": "squeeze",
+        "score": 0.03147315979003906,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0007.png": {
+        "type": "squeeze",
+        "score": 0.04209034889936447,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0008.png": {
+        "type": "squeeze",
+        "score": 0.046363890171051025,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0009.png": {
+        "type": "squeeze",
+        "score": 0.04366882145404816,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0010.png": {
+        "type": "squeeze",
+        "score": 0.02971879206597805,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0011.png": {
+        "type": "squeeze",
+        "score": 0.026509804651141167,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0012.png": {
+        "type": "squeeze",
+        "score": 0.0358123779296875,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0013.png": {
+        "type": "squeeze",
+        "score": 0.026926035061478615,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0014.png": {
+        "type": "squeeze",
+        "score": 0.035464074462652206,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0015.png": {
+        "type": "squeeze",
+        "score": 0.03959131985902786,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0016.png": {
+        "type": "squeeze",
+        "score": 0.04720782861113548,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0017.png": {
+        "type": "squeeze",
+        "score": 0.036209359765052795,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0018.png": {
+        "type": "squeeze",
+        "score": 0.03606667369604111,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0019.png": {
+        "type": "squeeze",
+        "score": 0.03972863778471947,
+        "is_defect": true
+      },
+      "capsule/squeeze/capsule_squeeze_0020.png": {
+        "type": "squeeze",
+        "score": 0.03719848766922951,
+        "is_defect": true
+      }
+    },
+    "pill": {
+      "pill/color/pill_color_0001.png": {
+        "type": "color",
+        "score": 0.031302209943532944,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0002.png": {
+        "type": "color",
+        "score": 0.03849943354725838,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0003.png": {
+        "type": "color",
+        "score": 0.037947993725538254,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0004.png": {
+        "type": "color",
+        "score": 0.03388764709234238,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0005.png": {
+        "type": "color",
+        "score": 0.03659338876605034,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0006.png": {
+        "type": "color",
+        "score": 0.03346824645996094,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0007.png": {
+        "type": "color",
+        "score": 0.03200289234519005,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0008.png": {
+        "type": "color",
+        "score": 0.03417757526040077,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0009.png": {
+        "type": "color",
+        "score": 0.03143950551748276,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0010.png": {
+        "type": "color",
+        "score": 0.041346825659275055,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0011.png": {
+        "type": "color",
+        "score": 0.03219130262732506,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0012.png": {
+        "type": "color",
+        "score": 0.052632421255111694,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0013.png": {
+        "type": "color",
+        "score": 0.03376540541648865,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0014.png": {
+        "type": "color",
+        "score": 0.036342084407806396,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0015.png": {
+        "type": "color",
+        "score": 0.039863988757133484,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0016.png": {
+        "type": "color",
+        "score": 0.04189193248748779,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0017.png": {
+        "type": "color",
+        "score": 0.034623727202415466,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0018.png": {
+        "type": "color",
+        "score": 0.03715117648243904,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0019.png": {
+        "type": "color",
+        "score": 0.04318883270025253,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0020.png": {
+        "type": "color",
+        "score": 0.040318120270967484,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0021.png": {
+        "type": "color",
+        "score": 0.04660249128937721,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0022.png": {
+        "type": "color",
+        "score": 0.03473468869924545,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0023.png": {
+        "type": "color",
+        "score": 0.03129544109106064,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0024.png": {
+        "type": "color",
+        "score": 0.03225100785493851,
+        "is_defect": true
+      },
+      "pill/color/pill_color_0025.png": {
+        "type": "color",
+        "score": 0.03673760965466499,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0001.png": {
+        "type": "combined",
+        "score": 0.034494608640670776,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0002.png": {
+        "type": "combined",
+        "score": 0.034702543169260025,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0003.png": {
+        "type": "combined",
+        "score": 0.04168899357318878,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0004.png": {
+        "type": "combined",
+        "score": 0.046967800706624985,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0005.png": {
+        "type": "combined",
+        "score": 0.03449535742402077,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0006.png": {
+        "type": "combined",
+        "score": 0.03801368921995163,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0007.png": {
+        "type": "combined",
+        "score": 0.037393875420093536,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0008.png": {
+        "type": "combined",
+        "score": 0.0333070270717144,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0009.png": {
+        "type": "combined",
+        "score": 0.037877488881349564,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0010.png": {
+        "type": "combined",
+        "score": 0.03099198080599308,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0011.png": {
+        "type": "combined",
+        "score": 0.04403296485543251,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0012.png": {
+        "type": "combined",
+        "score": 0.03911689668893814,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0013.png": {
+        "type": "combined",
+        "score": 0.0378006212413311,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0014.png": {
+        "type": "combined",
+        "score": 0.04448847845196724,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0015.png": {
+        "type": "combined",
+        "score": 0.03781985864043236,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0016.png": {
+        "type": "combined",
+        "score": 0.04865443706512451,
+        "is_defect": true
+      },
+      "pill/combined/pill_combined_0017.png": {
+        "type": "combined",
+        "score": 0.03823156654834747,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0001.png": {
+        "type": "contamination",
+        "score": 0.03384377807378769,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0002.png": {
+        "type": "contamination",
+        "score": 0.044192999601364136,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0003.png": {
+        "type": "contamination",
+        "score": 0.03777490183711052,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0004.png": {
+        "type": "contamination",
+        "score": 0.028919175267219543,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0005.png": {
+        "type": "contamination",
+        "score": 0.03837721422314644,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0006.png": {
+        "type": "contamination",
+        "score": 0.0288114994764328,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0007.png": {
+        "type": "contamination",
+        "score": 0.02955302968621254,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0008.png": {
+        "type": "contamination",
+        "score": 0.04789746552705765,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0009.png": {
+        "type": "contamination",
+        "score": 0.036213573068380356,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0010.png": {
+        "type": "contamination",
+        "score": 0.041799772530794144,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0011.png": {
+        "type": "contamination",
+        "score": 0.02928895689547062,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0012.png": {
+        "type": "contamination",
+        "score": 0.03414047136902809,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0013.png": {
+        "type": "contamination",
+        "score": 0.03701426088809967,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0014.png": {
+        "type": "contamination",
+        "score": 0.0357523187994957,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0015.png": {
+        "type": "contamination",
+        "score": 0.034899935126304626,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0016.png": {
+        "type": "contamination",
+        "score": 0.034112099558115005,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0017.png": {
+        "type": "contamination",
+        "score": 0.02960946410894394,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0018.png": {
+        "type": "contamination",
+        "score": 0.03519415482878685,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0019.png": {
+        "type": "contamination",
+        "score": 0.03562513366341591,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0020.png": {
+        "type": "contamination",
+        "score": 0.04524163901805878,
+        "is_defect": true
+      },
+      "pill/contamination/pill_contamination_0021.png": {
+        "type": "contamination",
+        "score": 0.03505125269293785,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0001.png": {
+        "type": "crack",
+        "score": 0.035347457975149155,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0002.png": {
+        "type": "crack",
+        "score": 0.027774440124630928,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0003.png": {
+        "type": "crack",
+        "score": 0.03152824565768242,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0004.png": {
+        "type": "crack",
+        "score": 0.030200256034731865,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0005.png": {
+        "type": "crack",
+        "score": 0.033421870321035385,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0006.png": {
+        "type": "crack",
+        "score": 0.034941691905260086,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0007.png": {
+        "type": "crack",
+        "score": 0.03245619684457779,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0008.png": {
+        "type": "crack",
+        "score": 0.03611088916659355,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0009.png": {
+        "type": "crack",
+        "score": 0.032690491527318954,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0010.png": {
+        "type": "crack",
+        "score": 0.03901395574212074,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0011.png": {
+        "type": "crack",
+        "score": 0.03131195157766342,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0012.png": {
+        "type": "crack",
+        "score": 0.03658897802233696,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0013.png": {
+        "type": "crack",
+        "score": 0.04784451052546501,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0014.png": {
+        "type": "crack",
+        "score": 0.037278711795806885,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0015.png": {
+        "type": "crack",
+        "score": 0.03939908742904663,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0016.png": {
+        "type": "crack",
+        "score": 0.03655099496245384,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0017.png": {
+        "type": "crack",
+        "score": 0.03307409957051277,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0018.png": {
+        "type": "crack",
+        "score": 0.029152246192097664,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0019.png": {
+        "type": "crack",
+        "score": 0.038455210626125336,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0020.png": {
+        "type": "crack",
+        "score": 0.04727237671613693,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0021.png": {
+        "type": "crack",
+        "score": 0.04149865731596947,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0022.png": {
+        "type": "crack",
+        "score": 0.03377872332930565,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0023.png": {
+        "type": "crack",
+        "score": 0.032130904495716095,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0024.png": {
+        "type": "crack",
+        "score": 0.040015000849962234,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0025.png": {
+        "type": "crack",
+        "score": 0.03932129219174385,
+        "is_defect": true
+      },
+      "pill/crack/pill_crack_0026.png": {
+        "type": "crack",
+        "score": 0.03637036681175232,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0001.png": {
+        "type": "faulty_imprint",
+        "score": 0.037479206919670105,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0002.png": {
+        "type": "faulty_imprint",
+        "score": 0.034512173384428024,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0003.png": {
+        "type": "faulty_imprint",
+        "score": 0.031132793053984642,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0004.png": {
+        "type": "faulty_imprint",
+        "score": 0.0306810662150383,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0005.png": {
+        "type": "faulty_imprint",
+        "score": 0.04168802127242088,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0006.png": {
+        "type": "faulty_imprint",
+        "score": 0.03320710361003876,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0007.png": {
+        "type": "faulty_imprint",
+        "score": 0.03751228749752045,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0008.png": {
+        "type": "faulty_imprint",
+        "score": 0.04507505148649216,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0009.png": {
+        "type": "faulty_imprint",
+        "score": 0.03351135924458504,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0010.png": {
+        "type": "faulty_imprint",
+        "score": 0.03506197780370712,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0011.png": {
+        "type": "faulty_imprint",
+        "score": 0.04135119915008545,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0012.png": {
+        "type": "faulty_imprint",
+        "score": 0.04998059570789337,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0013.png": {
+        "type": "faulty_imprint",
+        "score": 0.04263586550951004,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0014.png": {
+        "type": "faulty_imprint",
+        "score": 0.03818611800670624,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0015.png": {
+        "type": "faulty_imprint",
+        "score": 0.031039780005812645,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0016.png": {
+        "type": "faulty_imprint",
+        "score": 0.027860816568136215,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0017.png": {
+        "type": "faulty_imprint",
+        "score": 0.03739407658576965,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0018.png": {
+        "type": "faulty_imprint",
+        "score": 0.03241248428821564,
+        "is_defect": true
+      },
+      "pill/faulty_imprint/pill_faulty_imprint_0019.png": {
+        "type": "faulty_imprint",
+        "score": 0.0364564023911953,
+        "is_defect": true
+      },
+      "pill/good/pill_good_0001.png": {
+        "type": "good",
+        "score": 0.03818076476454735,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0002.png": {
+        "type": "good",
+        "score": 0.034405481070280075,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0003.png": {
+        "type": "good",
+        "score": 0.034670259803533554,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0004.png": {
+        "type": "good",
+        "score": 0.04467622563242912,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0005.png": {
+        "type": "good",
+        "score": 0.029482649639248848,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0006.png": {
+        "type": "good",
+        "score": 0.033861469477415085,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0007.png": {
+        "type": "good",
+        "score": 0.03170223534107208,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0008.png": {
+        "type": "good",
+        "score": 0.031656648963689804,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0009.png": {
+        "type": "good",
+        "score": 0.03454006835818291,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0010.png": {
+        "type": "good",
+        "score": 0.035905878990888596,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0011.png": {
+        "type": "good",
+        "score": 0.03900777921080589,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0012.png": {
+        "type": "good",
+        "score": 0.03621019795536995,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0013.png": {
+        "type": "good",
+        "score": 0.028139380738139153,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0014.png": {
+        "type": "good",
+        "score": 0.03279119357466698,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0015.png": {
+        "type": "good",
+        "score": 0.03451654314994812,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0016.png": {
+        "type": "good",
+        "score": 0.0314224548637867,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0017.png": {
+        "type": "good",
+        "score": 0.030795635655522346,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0018.png": {
+        "type": "good",
+        "score": 0.035616692155599594,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0019.png": {
+        "type": "good",
+        "score": 0.035286642611026764,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0020.png": {
+        "type": "good",
+        "score": 0.029672516509890556,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0021.png": {
+        "type": "good",
+        "score": 0.030869441106915474,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0022.png": {
+        "type": "good",
+        "score": 0.031760700047016144,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0023.png": {
+        "type": "good",
+        "score": 0.041473086923360825,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0024.png": {
+        "type": "good",
+        "score": 0.03160477802157402,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0025.png": {
+        "type": "good",
+        "score": 0.03641165792942047,
+        "is_defect": false
+      },
+      "pill/good/pill_good_0026.png": {
+        "type": "good",
+        "score": 0.039445873349905014,
+        "is_defect": false
+      },
+      "pill/pill_type/pill_pill_type_0001.png": {
+        "type": "pill_type",
+        "score": 0.061917610466480255,
+        "is_defect": true
+      },
+      "pill/pill_type/pill_pill_type_0002.png": {
+        "type": "pill_type",
+        "score": 0.06199205666780472,
+        "is_defect": true
+      },
+      "pill/pill_type/pill_pill_type_0003.png": {
+        "type": "pill_type",
+        "score": 0.03532829508185387,
+        "is_defect": true
+      },
+      "pill/pill_type/pill_pill_type_0004.png": {
+        "type": "pill_type",
+        "score": 0.038489118218421936,
+        "is_defect": true
+      },
+      "pill/pill_type/pill_pill_type_0005.png": {
+        "type": "pill_type",
+        "score": 0.04067426547408104,
+        "is_defect": true
+      },
+      "pill/pill_type/pill_pill_type_0006.png": {
+        "type": "pill_type",
+        "score": 0.0533880740404129,
+        "is_defect": true
+      },
+      "pill/pill_type/pill_pill_type_0007.png": {
+        "type": "pill_type",
+        "score": 0.05508419871330261,
+        "is_defect": true
+      },
+      "pill/pill_type/pill_pill_type_0008.png": {
+        "type": "pill_type",
+        "score": 0.036284610629081726,
+        "is_defect": true
+      },
+      "pill/pill_type/pill_pill_type_0009.png": {
+        "type": "pill_type",
+        "score": 0.039156343787908554,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0001.png": {
+        "type": "scratch",
+        "score": 0.03196024149656296,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0002.png": {
+        "type": "scratch",
+        "score": 0.03485943749547005,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0003.png": {
+        "type": "scratch",
+        "score": 0.03212932497262955,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0004.png": {
+        "type": "scratch",
+        "score": 0.032240498811006546,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0005.png": {
+        "type": "scratch",
+        "score": 0.0382293164730072,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0006.png": {
+        "type": "scratch",
+        "score": 0.028174137696623802,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0007.png": {
+        "type": "scratch",
+        "score": 0.035520754754543304,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0008.png": {
+        "type": "scratch",
+        "score": 0.038641754537820816,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0009.png": {
+        "type": "scratch",
+        "score": 0.035049233585596085,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0010.png": {
+        "type": "scratch",
+        "score": 0.03444480523467064,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0011.png": {
+        "type": "scratch",
+        "score": 0.03413120284676552,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0012.png": {
+        "type": "scratch",
+        "score": 0.03671359643340111,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0013.png": {
+        "type": "scratch",
+        "score": 0.030822690576314926,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0014.png": {
+        "type": "scratch",
+        "score": 0.057501405477523804,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0015.png": {
+        "type": "scratch",
+        "score": 0.03279859945178032,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0016.png": {
+        "type": "scratch",
+        "score": 0.02681254968047142,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0017.png": {
+        "type": "scratch",
+        "score": 0.03414841741323471,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0018.png": {
+        "type": "scratch",
+        "score": 0.03561895340681076,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0019.png": {
+        "type": "scratch",
+        "score": 0.03343892842531204,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0020.png": {
+        "type": "scratch",
+        "score": 0.04082643985748291,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0021.png": {
+        "type": "scratch",
+        "score": 0.03400598093867302,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0022.png": {
+        "type": "scratch",
+        "score": 0.03511083126068115,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0023.png": {
+        "type": "scratch",
+        "score": 0.04535190388560295,
+        "is_defect": true
+      },
+      "pill/scratch/pill_scratch_0024.png": {
+        "type": "scratch",
+        "score": 0.04073683172464371,
+        "is_defect": true
+      }
+    },
+    "toothbrush": {
+      "toothbrush/defective/toothbrush_defective_0001.png": {
+        "type": "defective",
+        "score": 0.05515699088573456,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0002.png": {
+        "type": "defective",
+        "score": 0.049217116087675095,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0003.png": {
+        "type": "defective",
+        "score": 0.043126244097948074,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0004.png": {
+        "type": "defective",
+        "score": 0.05010465160012245,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0005.png": {
+        "type": "defective",
+        "score": 0.040646735578775406,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0006.png": {
+        "type": "defective",
+        "score": 0.0408853255212307,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0007.png": {
+        "type": "defective",
+        "score": 0.048274435102939606,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0008.png": {
+        "type": "defective",
+        "score": 0.046762384474277496,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0009.png": {
+        "type": "defective",
+        "score": 0.05234634503722191,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0010.png": {
+        "type": "defective",
+        "score": 0.04614007845520973,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0011.png": {
+        "type": "defective",
+        "score": 0.05491950362920761,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0012.png": {
+        "type": "defective",
+        "score": 0.04347924515604973,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0013.png": {
+        "type": "defective",
+        "score": 0.053785983473062515,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0014.png": {
+        "type": "defective",
+        "score": 0.04923585429787636,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0015.png": {
+        "type": "defective",
+        "score": 0.051574256271123886,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0016.png": {
+        "type": "defective",
+        "score": 0.050184763967990875,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0017.png": {
+        "type": "defective",
+        "score": 0.05909121409058571,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0018.png": {
+        "type": "defective",
+        "score": 0.05555139482021332,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0019.png": {
+        "type": "defective",
+        "score": 0.05040782317519188,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0020.png": {
+        "type": "defective",
+        "score": 0.049521759152412415,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0021.png": {
+        "type": "defective",
+        "score": 0.05467728152871132,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0022.png": {
+        "type": "defective",
+        "score": 0.04771110415458679,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0023.png": {
+        "type": "defective",
+        "score": 0.05068020522594452,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0024.png": {
+        "type": "defective",
+        "score": 0.04791940003633499,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0025.png": {
+        "type": "defective",
+        "score": 0.04701431840658188,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0026.png": {
+        "type": "defective",
+        "score": 0.05995991453528404,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0027.png": {
+        "type": "defective",
+        "score": 0.04986344650387764,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0028.png": {
+        "type": "defective",
+        "score": 0.05080306902527809,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0029.png": {
+        "type": "defective",
+        "score": 0.04976555332541466,
+        "is_defect": true
+      },
+      "toothbrush/defective/toothbrush_defective_0030.png": {
+        "type": "defective",
+        "score": 0.04807382822036743,
+        "is_defect": true
+      },
+      "toothbrush/good/toothbrush_good_0001.png": {
+        "type": "good",
+        "score": 0.045950766652822495,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0002.png": {
+        "type": "good",
+        "score": 0.04787570610642433,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0003.png": {
+        "type": "good",
+        "score": 0.046089623123407364,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0004.png": {
+        "type": "good",
+        "score": 0.05820636451244354,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0005.png": {
+        "type": "good",
+        "score": 0.0507463775575161,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0006.png": {
+        "type": "good",
+        "score": 0.045492399483919144,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0007.png": {
+        "type": "good",
+        "score": 0.05129774659872055,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0008.png": {
+        "type": "good",
+        "score": 0.05156727880239487,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0009.png": {
+        "type": "good",
+        "score": 0.049346260726451874,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0010.png": {
+        "type": "good",
+        "score": 0.04541567340493202,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0011.png": {
+        "type": "good",
+        "score": 0.04734164848923683,
+        "is_defect": false
+      },
+      "toothbrush/good/toothbrush_good_0012.png": {
+        "type": "good",
+        "score": 0.0513315349817276,
+        "is_defect": false
+      }
+    }
+  }
+}
