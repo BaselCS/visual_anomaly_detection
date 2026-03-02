@@ -1,0 +1,22 @@
+2026-03-01 17:18:51,000 - INFO - Detected category counts from train dir:
+2026-03-01 17:18:51,000 - INFO -   bottle: 209 real/total images
+2026-03-01 17:18:51,000 - INFO -   capsule: 219 real/total images
+2026-03-01 17:18:51,000 - INFO -   pill: 267 real/total images
+2026-03-01 17:18:51,000 - INFO -   toothbrush: 60 real/total images
+2026-03-01 17:18:51,000 - INFO - Loading Stable Diffusion Img2Img pipeline...
+2026-03-01 17:18:51,000 - INFO - Runtime config | deterministic=True | num_images_per_call=2
+2026-03-01 17:18:55,313 - WARNING - xFormers not enabled (Refer to https://github.com/facebookresearch/xformers for more information on how to install xformers). Continuing without it.
+2026-03-01 17:18:55,314 - INFO - ================================================================
+2026-03-01 17:18:55,314 - INFO - Category: bottle | real=209 | target_synthetic=400 | max_tries=800
+2026-03-01 17:24:24,161 - INFO - Finished bottle: generated=400, attempts=400, rejected_blur=0, rejected_brightness=0, rejected_saved=0
+2026-03-01 17:24:24,161 - INFO - ================================================================
+2026-03-01 17:24:24,161 - INFO - Category: capsule | real=219 | target_synthetic=400 | max_tries=800
+2026-03-01 17:30:10,806 - INFO - Finished capsule: generated=400, attempts=400, rejected_blur=0, rejected_brightness=0, rejected_saved=0
+2026-03-01 17:30:10,806 - INFO - ================================================================
+2026-03-01 17:30:10,806 - INFO - Category: pill | real=267 | target_synthetic=400 | max_tries=800
+2026-03-01 17:35:44,883 - INFO - Finished pill: generated=400, attempts=400, rejected_blur=0, rejected_brightness=0, rejected_saved=0
+2026-03-01 17:35:44,883 - INFO - ================================================================
+2026-03-01 17:35:44,883 - INFO - Category: toothbrush | real=60 | target_synthetic=400 | max_tries=800
+2026-03-01 17:41:10,144 - INFO - Finished toothbrush: generated=400, attempts=400, rejected_blur=0, rejected_brightness=0, rejected_saved=0
+2026-03-01 17:41:10,154 - INFO - ================================================================
+2026-03-01 17:41:10,154 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260301_174110.json

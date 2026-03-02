@@ -307,3 +307,106 @@ Final Assessment:
 2026-03-01 12:46:41,727 - INFO -   Recall: 0.6042
 2026-03-01 12:46:41,727 - INFO -   F1-Score: 0.7108
 2026-03-01 12:46:41,727 - INFO - ==================================================
+2026-03-02 06:01:07,461 - INFO - Detecting trained models...
+2026-03-02 06:01:07,462 - INFO - Detected selected training run: trained_models/train9
+2026-03-02 06:01:07,462 - INFO -   ✓ Found best model: trained_models/train9/best_model
+2026-03-02 06:01:07,462 - INFO -   Training info: Best epoch 9 with loss 0.05807073492752878
+2026-03-02 06:01:07,462 - INFO - 
+Starting Anomaly Detection...
+==================================================
+2026-03-02 06:01:07,462 - INFO - 
+======================================================================
+2026-03-02 06:01:07,462 - INFO -  TESTING CATEGORY: BOTTLE
+2026-03-02 06:01:07,462 - INFO -    Model: trained_models/train9/best_model
+2026-03-02 06:01:07,462 - INFO - ======================================================================
+2026-03-02 06:01:07,462 - INFO - Loading base model...
+2026-03-02 06:01:12,616 - INFO -  Loaded trained model for bottle
+
+2026-03-02 06:01:12,616 - INFO - 
+ Processing category: BOTTLE
+2026-03-02 06:12:04,443 - INFO -   ✓ Processed 83 images
+2026-03-02 06:12:04,444 - INFO - 
+======================================================================
+2026-03-02 06:12:04,444 - INFO -  TESTING CATEGORY: CAPSULE
+2026-03-02 06:12:04,444 - INFO -    Model: trained_models/train9/best_model
+2026-03-02 06:12:04,444 - INFO - ======================================================================
+2026-03-02 06:12:04,444 - INFO -  Loaded trained model for capsule
+
+2026-03-02 06:12:04,444 - INFO - 
+ Processing category: CAPSULE
+2026-03-02 06:40:00,838 - INFO -   ✓ Processed 132 images
+2026-03-02 06:40:00,839 - INFO - 
+======================================================================
+2026-03-02 06:40:00,839 - INFO -  TESTING CATEGORY: PILL
+2026-03-02 06:40:00,839 - INFO -    Model: trained_models/train9/best_model
+2026-03-02 06:40:00,839 - INFO - ======================================================================
+2026-03-02 06:40:00,839 - INFO -  Loaded trained model for pill
+
+2026-03-02 06:40:00,839 - INFO - 
+ Processing category: PILL
+2026-03-02 06:56:07,658 - INFO -   ✓ Processed 167 images
+2026-03-02 06:56:07,659 - INFO - 
+======================================================================
+2026-03-02 06:56:07,659 - INFO -  TESTING CATEGORY: TOOTHBRUSH
+2026-03-02 06:56:07,659 - INFO -    Model: trained_models/train9/best_model
+2026-03-02 06:56:07,659 - INFO - ======================================================================
+2026-03-02 06:56:07,659 - INFO -  Loaded trained model for toothbrush
+
+2026-03-02 06:56:07,659 - INFO - 
+ Processing category: TOOTHBRUSH
+2026-03-02 07:04:04,924 - INFO -   ✓ Processed 42 images
+2026-03-02 07:04:04,925 - INFO - 
+==================================================
+2026-03-02 07:04:04,925 - INFO - 
+ Calculating automatic threshold and metrics...
+2026-03-02 07:04:04,940 - INFO - 
+ Proxy Threshold (mean of per-category thresholds): 0.0461
+2026-03-02 07:04:04,940 - INFO -  AUC-ROC Score (evaluation split): 0.5208
+2026-03-02 07:04:05,171 - INFO -  ROC curve saved to anomaly_detection_results/roc_curve_3.png
+2026-03-02 07:04:05,171 - INFO - 
+ Performance Metrics (evaluation split):
+2026-03-02 07:04:05,171 - INFO -   Accuracy:          0.6014 (60.14%)
+2026-03-02 07:04:05,171 - INFO -   Balanced Accuracy: 0.5967
+2026-03-02 07:04:05,171 - INFO -   Precision:         0.8631
+2026-03-02 07:04:05,171 - INFO -   Recall:            0.6042
+2026-03-02 07:04:05,171 - INFO -   F1-Score:          0.7108
+2026-03-02 07:04:05,171 - INFO - 
+ Results by Category:
+2026-03-02 07:04:05,172 - INFO - 
+  BOTTLE:
+2026-03-02 07:04:05,172 - INFO -     Good images:     20 | Avg score: 0.0637
+2026-03-02 07:04:05,172 - INFO -     Defect images:   63 | Avg score: 0.0690
+2026-03-02 07:04:05,172 - INFO -     Separation:     0.0053 ⚠
+2026-03-02 07:04:05,172 - INFO - 
+  CAPSULE:
+2026-03-02 07:04:05,172 - INFO -     Good images:     23 | Avg score: 0.0324
+2026-03-02 07:04:05,172 - INFO -     Defect images:  109 | Avg score: 0.0349
+2026-03-02 07:04:05,172 - INFO -     Separation:     0.0024 ⚠
+2026-03-02 07:04:05,172 - INFO - 
+  PILL:
+2026-03-02 07:04:05,172 - INFO -     Good images:     26 | Avg score: 0.0344
+2026-03-02 07:04:05,172 - INFO -     Defect images:  141 | Avg score: 0.0372
+2026-03-02 07:04:05,172 - INFO -     Separation:     0.0028 ⚠
+2026-03-02 07:04:05,173 - INFO - 
+  TOOTHBRUSH:
+2026-03-02 07:04:05,173 - INFO -     Good images:     12 | Avg score: 0.0492
+2026-03-02 07:04:05,173 - INFO -     Defect images:   30 | Avg score: 0.0499
+2026-03-02 07:04:05,173 - INFO -     Separation:     0.0007 ⚠
+2026-03-02 07:04:05,175 - INFO - 
+✓ Results saved to anomaly_detection_results/detection_results_3.json (run #3)
+2026-03-02 07:04:05,175 - INFO -  Total result files: 4
+2026-03-02 07:04:05,175 - INFO - 
+ Generating training visualization...
+2026-03-02 07:04:05,763 - INFO -  Training visualization saved to anomaly_detection_results/training_visualization_3.png
+2026-03-02 07:04:05,763 - INFO - 
+==================================================
+2026-03-02 07:04:05,763 - INFO - 
+Final Assessment:
+2026-03-02 07:04:05,763 - INFO -   AUC-ROC Score (evaluation split): 0.5208
+2026-03-02 07:04:05,763 - INFO -   Proxy Threshold (mean per-category): 0.0461
+2026-03-02 07:04:05,763 - INFO -   Accuracy: 0.6014 (60.14%)
+2026-03-02 07:04:05,763 - INFO -   Balanced Accuracy: 0.5967
+2026-03-02 07:04:05,763 - INFO -   Precision: 0.8631
+2026-03-02 07:04:05,764 - INFO -   Recall: 0.6042
+2026-03-02 07:04:05,764 - INFO -   F1-Score: 0.7108
+2026-03-02 07:04:05,764 - INFO - ==================================================
