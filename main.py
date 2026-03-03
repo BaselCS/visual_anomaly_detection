@@ -43,7 +43,7 @@ DEFAULT_CONFIG = {
     "early_stop_patience": 20,     # Stop if no improvement for x epochs
     "early_stop_min_delta": 1e-4,
     "min_epochs_before_early_stop": 30, # Don't allow early stopping before this many epochs
-    "num_workers": 0,              # number of subprocesses for data loading, adjust based on CPU cores and memory, Windows users may want to set this to 0 for compatibility
+    "num_workers": 2,              # number of subprocesses for data loading, adjust based on CPU cores and memory, Windows users may want to set this to 0 for compatibility
 }
 
 # Configure logging
@@ -208,7 +208,6 @@ def get_transforms(category, image_size=512):
         params = category_params["default"]
 
     augmentation_steps = [
-        transforms.RandomErasing(p=0.2, scale=(0.02, 0.1), ratio=(0.3, 3.3)),
         transforms.Resize((image_size, image_size)),
         transforms.RandomRotation(degrees=params["rotation"]),
         transforms.RandomHorizontalFlip(p=params["hflip"]),
@@ -224,6 +223,7 @@ def get_transforms(category, image_size=512):
             transforms.ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation),
             transforms.RandomAdjustSharpness(sharpness_factor=2, p=params["sharpness_p"]),
             transforms.ToTensor(),
+            transforms.RandomErasing(p=0.2, scale=(0.02, 0.1), ratio=(0.3, 3.3)),
             transforms.Normalize([0.5], [0.5]),
         ]
     )

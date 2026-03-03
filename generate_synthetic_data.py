@@ -59,10 +59,10 @@ DEFAULT_CONFIG = {
     "max_tries_multiplier": 3,      # Max generation attempts = target_count * multiplier. Set higher if many generations are expected to be rejected.
     "image_size": 512,              # Stable Diffusion default is 512x512.
     "num_steps": 35,                # Fewer steps = faster but lower quality. 
-    "guidance_scale": 7.5,          # How strongly the generation should follow the prompt. Higher values = more adherence to prompt but potentially less diversity. Adjust based on observed results.
+    "guidance_scale": 8.5,          # How strongly the generation should follow the prompt. Higher values = more adherence to prompt but potentially less diversity. Adjust based on observed results.
     "strength": 0.35,               # Fallback fixed strength if min/max are equal.
     "strength_min": 0.25,           # Seeded random strength lower bound.
-    "strength_max": 0.42,           # Seeded random strength upper bound.
+    "strength_max": 0.35,           # Seeded random strength upper bound.
     "lighting_variants": [
         "soft studio lighting",
         "bright professional lighting",
