@@ -1,5 +1,6 @@
 import os
 import torch
+from torchvision import transforms
 import numpy as np
 import random
 import hashlib
@@ -16,6 +17,7 @@ from datetime import datetime
 import logging
 import subprocess
 import sys
+from pytorch_msssim import ms_ssim
 
 warnings.filterwarnings('ignore')
 
@@ -194,44 +196,31 @@ available_models = {category: model_path for category in trained_categories}
 # 2. Anomaly Score Function (دالة حساب الخطأ)
 def calculate_anomaly_score(original_image, reconstructed_image):
     """Calculate pixel-wise difference between original and reconstructed images by combining L1, L2, and a lightweight SSIM-inspired structural similarity."""
-    org_np = np.array(original_image.resize((512, 512))).astype(np.float32) / 255.0
-    rec_np = np.array(reconstructed_image.resize((512, 512))).astype(np.float32) / 255.0
-    
-    l1_diff = np.abs(org_np - rec_np)
-    l2_diff = (org_np - rec_np) ** 2
-    
-    # Global SSIM-style structural similarity (lightweight, no external deps)
-    # SSIM components: luminance (mean), contrast (variance), structure (covariance)
-    # SSIM = ((2*mu_x*mu_y + C1) * (2*sigma_xy + C2)) / ((mu_x^2 + mu_y^2 + C1) * (sigma_x + sigma_y + C2)), where mu is mean, sigma is variance, and sigma_xy is covariance and c1, c2 are small constants to stabilize.
+    resize_op = transforms.Resize((512, 512))
+    to_tensor = transforms.ToTensor()
 
-    org_gray = np.mean(org_np, axis=2)
-    rec_gray = np.mean(rec_np, axis=2)
-    mu_x = float(np.mean(org_gray))
-    mu_y = float(np.mean(rec_gray))
-    sigma_x = float(np.var(org_gray))
-    sigma_y = float(np.var(rec_gray))
-    sigma_xy = float(np.mean((org_gray - mu_x) * (rec_gray - mu_y)))
+    org_t = to_tensor(resize_op(original_image)).to(device)
+    rec_t = to_tensor(resize_op(reconstructed_image)).to(device)
 
-    c1 = (0.01 ** 2)
-    c2 = (0.03 ** 2)
-    ssim_num = (2 * mu_x * mu_y + c1) * (2 * sigma_xy + c2)
-    ssim_den = (mu_x ** 2 + mu_y ** 2 + c1) * (sigma_x + sigma_y + c2)
-    ssim = ssim_num / ssim_den if ssim_den != 0 else 0.0
-    ssim = float(np.clip(ssim, 0.0, 1.0))
+    diff_t = torch.abs(org_t - rec_t)
+    l1_score = float(diff_t.mean().item())
+    l2_score = float(torch.mean((org_t - rec_t) ** 2).item())
+    max_diff = float(diff_t.max().item())
 
-    # Aggregate scores
-    l1_score = np.mean(l1_diff)
-    l2_score = np.mean(l2_diff)
-    max_diff = np.max(l1_diff)
-    ssim_distance = 1.0 - ssim
+    org_batch = org_t.unsqueeze(0)
+    rec_batch = rec_t.unsqueeze(0)
     
-    # Combine scores (weighted average)
+    msssim_value = float(ms_ssim(org_batch, rec_batch, data_range=1.0, size_average=True).item())
+    msssim_distance = 1.0 - msssim_value
+
     combined_score = (
-        0.45 * l1_score
-        + 0.25 * l2_score
-        + 0.10 * max_diff
-        + 0.20 * ssim_distance
+        0.40 * l1_score + 
+        0.20 * l2_score + 
+        0.10 * max_diff + 
+        0.30 * msssim_distance
     )
+
+    l1_diff = np.transpose(diff_t.detach().cpu().numpy(), (1, 2, 0))
     
     return combined_score, l1_diff
 
@@ -706,25 +695,48 @@ try:
         
         # Extract data
         epochs = [entry['epoch'] for entry in train_log['epochs']]
-        losses = [entry.get('avg_loss', entry.get('train_loss')) for entry in train_log['epochs']]
+        train_losses = [entry.get('train_loss', entry.get('avg_loss')) for entry in train_log['epochs']]
+        val_losses = [entry.get('val_loss', entry.get('validation_loss')) for entry in train_log['epochs']]
         learning_rates = [entry['learning_rate'] for entry in train_log['epochs']]
         
         # Create figure with subplots
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
         
-        # Plot training loss
-        ax1.plot(epochs, losses, 'b-', linewidth=2, marker='o', markersize=4, alpha=0.7)
+        # Plot training and validation loss
+        ax1.plot(epochs, train_losses, 'b-', linewidth=2, marker='o', markersize=4, alpha=0.7, label='Training Loss')
+        if any(v is not None for v in val_losses):
+            plotted_val_losses = [np.nan if v is None else v for v in val_losses]
+            ax1.plot(epochs, plotted_val_losses, 'm-', linewidth=2, marker='x', markersize=4, alpha=0.8, label='Validation Loss')
         ax1.set_xlabel('Epoch', fontsize=12)
-        ax1.set_ylabel('Average Loss', fontsize=12)
-        ax1.set_title('Training Loss Over Time', fontsize=14, fontweight='bold')
+        ax1.set_ylabel('Loss', fontsize=12)
+        ax1.set_title('Training and Validation Loss Over Time', fontsize=14, fontweight='bold')
         ax1.grid(True, alpha=0.3)
         ax1.set_xlim(left=0)
         
-        # Add min loss annotation
-        min_loss = min(losses)
-        min_epoch = epochs[losses.index(min_loss)]
-        ax1.axhline(y=min_loss, color='r', linestyle='--', alpha=0.5, 
-                    label=f'Min Loss: {min_loss:.6f} (Epoch {min_epoch})')
+        # Add minimum-loss annotations
+        valid_train = [(i, v) for i, v in enumerate(train_losses) if v is not None]
+        if valid_train:
+            train_min_idx, min_train_loss = min(valid_train, key=lambda x: x[1])
+            train_min_epoch = epochs[train_min_idx]
+            ax1.axhline(
+                y=min_train_loss,
+                color='b',
+                linestyle='--',
+                alpha=0.35,
+                label=f'Min Train: {min_train_loss:.6f} (Epoch {train_min_epoch})',
+            )
+
+        valid_val = [(i, v) for i, v in enumerate(val_losses) if v is not None]
+        if valid_val:
+            val_min_idx, min_val_loss = min(valid_val, key=lambda x: x[1])
+            val_min_epoch = epochs[val_min_idx]
+            ax1.axhline(
+                y=min_val_loss,
+                color='m',
+                linestyle='--',
+                alpha=0.35,
+                label=f'Min Val: {min_val_loss:.6f} (Epoch {val_min_epoch})',
+            )
         ax1.legend()
         
         # Plot learning rate

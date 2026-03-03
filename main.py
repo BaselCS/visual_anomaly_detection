@@ -28,7 +28,7 @@ DEFAULT_CONFIG = {
     "epochs": 150,
     "batch_size": 2,                  # Optimized for 3060 12GB
     "gradient_accumulation_steps": 4, # Effective batch size = 2 * 4 = 8
-    "learning_rate": 4e-6,
+    "learning_rate": 1e-4,
     "weight_decay": 1e-2,
     "max_grad_norm": 1.0,             # Gradient clipping to prevent explosion
     "lr_scheduler": "cosine",         # Learning rate decay
@@ -42,7 +42,7 @@ DEFAULT_CONFIG = {
     "seed": 999,
     "early_stop_patience": 20,     # Stop if no improvement for x epochs
     "early_stop_min_delta": 1e-4,
-    "min_epochs_before_early_stop": 50, # Don't allow early stopping before this many epochs
+    "min_epochs_before_early_stop": 30, # Don't allow early stopping before this many epochs
     "num_workers": 0,              # number of subprocesses for data loading, adjust based on CPU cores and memory, Windows users may want to set this to 0 for compatibility
 }
 
@@ -208,6 +208,7 @@ def get_transforms(category, image_size=512):
         params = category_params["default"]
 
     augmentation_steps = [
+        transforms.RandomErasing(p=0.2, scale=(0.02, 0.1), ratio=(0.3, 3.3)),
         transforms.Resize((image_size, image_size)),
         transforms.RandomRotation(degrees=params["rotation"]),
         transforms.RandomHorizontalFlip(p=params["hflip"]),

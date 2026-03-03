@@ -56,14 +56,22 @@ DEFAULT_CONFIG = {
     "train_dir": "data/train",
     "output_dir": "data/train",
     "min_blur_score": 8.0,          # Lower is blurrier. Adjust based on observed scores to filter out blurry generations.
-    "max_tries_multiplier": 2,      # Max generation attempts = target_count * multiplier. Set higher if many generations are expected to be rejected.
+    "max_tries_multiplier": 3,      # Max generation attempts = target_count * multiplier. Set higher if many generations are expected to be rejected.
     "image_size": 512,              # Stable Diffusion default is 512x512.
-    "num_steps": 30,                # Fewer steps = faster but lower quality. 
-    "guidance_scale": 5.5,          # How strongly the generation should follow the prompt. Higher values = more adherence to prompt but potentially less diversity. Adjust based on observed results.
-    "strength": 0.12,               # How much to transform the source image. Lower = more similar to source, higher = more change. Adjust based on observed results.
+    "num_steps": 35,                # Fewer steps = faster but lower quality. 
+    "guidance_scale": 7.5,          # How strongly the generation should follow the prompt. Higher values = more adherence to prompt but potentially less diversity. Adjust based on observed results.
+    "strength": 0.35,               # Fallback fixed strength if min/max are equal.
+    "strength_min": 0.25,           # Seeded random strength lower bound.
+    "strength_max": 0.42,           # Seeded random strength upper bound.
+    "lighting_variants": [
+        "soft studio lighting",
+        "bright professional lighting",
+        "clean cinematic lighting",
+        "top-down lighting",
+    ],
     "seed": 999,                    
     "IMAGES_PER_CATEGORY": 400,
-    "deterministic": True,         
+    "deterministic": False,         
     "num_images_per_call": 2,       # How many images to generate in parallel per pipeline call. 2 is Good for 3060
     "enable_xformers": True,        # Enable xFormers memory-efficient attention if available 
     "enable_attention_slicing": False, # Enable attention slicing to reduce memory usage at the cost of speed,12Gb is usually enough without this.
@@ -288,14 +296,32 @@ def generate_for_category(
     progress = tqdm(total=desired_count, desc=f"Generating {category}")
 
     while generated < desired_count and attempted < max_tries:
-        prompt = build_prompt(category)
-        source_image_path = random.choice(source_images)
+        attempt_seed = config["seed"] + attempted + (stable_int(category) % 10000)
+        attempt_rng = random.Random(attempt_seed)
+
+        base_prompt = build_prompt(category)
+        lighting_variants = config.get("lighting_variants", [])
+        selected_lighting = attempt_rng.choice(lighting_variants) if lighting_variants else ""
+        prompt = f"{base_prompt}, {selected_lighting}" if selected_lighting else base_prompt
+
+        strength_min = float(config.get("strength_min", config["strength"]))
+        strength_max = float(config.get("strength_max", config["strength"]))
+        dynamic_strength = attempt_rng.uniform(min(strength_min, strength_max), max(strength_min, strength_max))
+
+        source_image_path = attempt_rng.choice(source_images)
 
         try:
             with Image.open(source_image_path).convert("RGB") as raw_image:
                 source_image = raw_image.resize(
                     (config["image_size"], config["image_size"]), Image.Resampling.BILINEAR
                 )
+
+            if config.get("add_noise", True):
+                noise_sigma = 0.05
+                source_image_array = np.array(source_image).astype(np.float32) / 255.0
+                noise = np.random.normal(0, noise_sigma, source_image_array.shape)
+                source_image_array = np.clip(source_image_array + noise, 0, 1)
+                source_image = Image.fromarray((source_image_array * 255).astype(np.uint8))
         except Exception as exc:
             logger.warning(f"Failed to open source image {source_image_path}: {exc}")
             continue
@@ -314,7 +340,7 @@ def generate_for_category(
                 prompt=prompt,
                 negative_prompt=NEGATIVE_PROMPT,
                 image=source_image,
-                strength=config["strength"],
+                strength=dynamic_strength,
                 num_inference_steps=config["num_steps"],
                 guidance_scale=config["guidance_scale"],
                 num_images_per_prompt=batch_size,
@@ -350,6 +376,8 @@ def generate_for_category(
                     {
                         "file": filename,
                         "prompt": prompt,
+                        "lighting_variant": selected_lighting,
+                        "strength": dynamic_strength,
                         "source_image": os.path.basename(source_image_path),
                         "sharpness": sharpness,
                     }
