@@ -71,3 +71,13 @@
 2026-03-03 18:55:15,038 - INFO - Finished toothbrush: generated=400, attempts=400, rejected_blur=0, rejected_brightness=0, rejected_saved=0
 2026-03-03 18:55:15,061 - INFO - ================================================================
 2026-03-03 18:55:15,061 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260303_185515.json
+2026-03-04 02:02:28,423 - INFO - Detected category counts from train dir:
+2026-03-04 02:02:28,423 - INFO -   bottle: 209 real/total images
+2026-03-04 02:02:28,423 - INFO - Loading Stable Diffusion Img2Img pipeline...
+2026-03-04 02:02:28,423 - INFO - Runtime config | deterministic=False | num_images_per_call=2
+2026-03-04 02:02:40,494 - WARNING - xFormers not enabled (Refer to https://github.com/facebookresearch/xformers for more information on how to install xformers). Continuing without it.
+2026-03-04 02:02:40,495 - INFO - ================================================================
+2026-03-04 02:02:40,495 - INFO - Category: bottle | real=209 | target_synthetic=400 | max_tries=1200
+2026-03-04 02:12:24,444 - INFO - Finished bottle: generated=400, attempts=400, rejected_blur=0, rejected_brightness=0, rejected_saved=0
+2026-03-04 02:12:24,450 - INFO - ================================================================
+2026-03-04 02:12:24,450 - INFO - Synthetic data generation complete. Summary: data/train/synthetic_generation_summary_20260304_021224.json

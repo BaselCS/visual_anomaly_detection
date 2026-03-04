@@ -23,12 +23,13 @@ def get_next_train_dir(base_dir="trained_models"):
     return os.path.join(base_dir, f"train{train_num}")
 
 DEFAULT_CONFIG = {
-    "categories": ["bottle", "capsule", "pill", "toothbrush"],
+    # "categories": ["bottle", "capsule", "pill", "toothbrush"],
+    "categories": ["bottle"],
     "use_data_augmentation": True,  # Set to True to enable category-specific data augmentation
     "epochs": 150,
     "batch_size": 2,                  # Optimized for 3060 12GB
     "gradient_accumulation_steps": 4, # Effective batch size = 2 * 4 = 8
-    "learning_rate": 1e-4,
+    "learning_rate": 1e-7,
     "weight_decay": 1e-2,
     "max_grad_norm": 1.0,             # Gradient clipping to prevent explosion
     "lr_scheduler": "cosine",         # Learning rate decay
@@ -137,7 +138,7 @@ out("✓ Model loaded successfully")
 # 4. Apply LoRA 
 out("\nApplying LoRA configuration...")
 lora_config = LoraConfig(
-    r=16,               #rank
+    r=8,               #rank
     lora_alpha=32,
     target_modules=["to_q", "to_v", "to_k", "to_out.0"], # to_q for query, to_v for value, to_k for key, to_out.0 for output
     lora_dropout=0.05,  # REDUCED dropout for better fitting
@@ -293,7 +294,9 @@ class AnomalyDataset(Dataset):
                 transform = self.basic_transform
 
             image = transform(image)
-            
+            # Ensure image is a tensor
+            if not isinstance(image, torch.Tensor):
+                image = transforms.ToTensor()(image)
             return {"pixel_values": image, "prompt": prompt, "category": category}
         except Exception as e:
             out(f"Error loading {img_path}: {e}", level="error")

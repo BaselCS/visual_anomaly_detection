@@ -171,6 +171,23 @@ def blur_score(image: Image.Image) -> float:
     return float(np.var(gx) + np.var(gy))
 
 
+def is_bad_image(image: Image.Image, min_size: int = 512) -> bool:
+    """
+    Reject images that are too small or visually wrong (blank, single color, or very low variance).
+    """
+    # Check size
+    if image.width < min_size or image.height < min_size:
+        return True
+    # Check for single color or blank image
+    arr = np.array(image)
+    if arr.std() < 2.0:  # Very low variance (almost blank or single color)
+        return True
+    # Optionally, check for excessive white/black
+    if np.mean(arr) < 10 or np.mean(arr) > 245:
+        return True
+    return False
+
+
 def brightness_ok(image: Image.Image, min_mean: float = 25.0, max_mean: float = 230.0) -> bool:
     """
     Check if the image brightness is within acceptable bounds by calculating the mean pixel intensity. This helps filter out generated images.
@@ -350,10 +367,15 @@ def generate_for_category(
             logger.warning(f"Generation failed for {category} at try {attempted + 1}: {exc}")
             continue
 
+
         for image in result.images:
             attempted += 1
             sharpness = blur_score(image)
-            image_bad = sharpness < config["min_blur_score"] or not brightness_ok(image)
+            image_bad = (
+                sharpness < config["min_blur_score"]
+                or not brightness_ok(image)
+                or is_bad_image(image, min_size=config.get("image_size", 512))
+            )
 
             if sharpness < config["min_blur_score"]:
                 rejected_blur += 1

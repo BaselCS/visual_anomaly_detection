@@ -23,8 +23,10 @@ warnings.filterwarnings('ignore')
 
 DEFAULT_EVAL_CONFIG = {
     "seed": 999,
+    # "categories": ["bottle", "capsule", "pill", "toothbrush"],  # Test all trained categories
+    "categories": ["bottle"],  # Test only specific categories (set to None to test all trained categories)
     "calibration_fraction": 0.3,                # Fraction of data used for calibration vs evaluation
-    "reconstruction_strength": 0.25,            # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
+    "reconstruction_strength": 0.4,            # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
     "reconstruction_guidance_scale": 6.5,       # Guidance scale for reconstruction (higher = more faithful to prompt, but may reduce diversity)
     "reconstruction_steps": 30,                 # Number of steps for reconstruction (lower = faster but less refined)
 }
@@ -104,10 +106,24 @@ def resolve_model_path(run_models_dir: str) -> tuple[str | None, str | None]:
     if os.path.exists(final_model_path):
         return final_model_path, "final"
 
+    # Try BEST checkpoints first
     checkpoints = [d for d in os.listdir(run_models_dir) if d.startswith("checkpoint_epoch_") and "_BEST" in d]
     if checkpoints:
         checkpoints.sort(key=lambda x: int(x.split("_")[2]), reverse=True)
-        return os.path.join(run_models_dir, checkpoints[0]), "checkpoint"
+        return os.path.join(run_models_dir, checkpoints[0]), "checkpoint_best"
+
+    # Fall back to any checkpoint (use the one with highest epoch number)
+    all_checkpoints = [d for d in os.listdir(run_models_dir) if d.startswith("checkpoint_epoch_")]
+    if all_checkpoints:
+        # Extract epoch number and sort descending
+        def get_epoch(name):
+            parts = name.replace("_BEST", "").split("_")
+            for p in parts:
+                if p.isdigit():
+                    return int(p)
+            return 0
+        all_checkpoints.sort(key=get_epoch, reverse=True)
+        return os.path.join(run_models_dir, all_checkpoints[0]), "checkpoint_last"
 
     return None, None
 
@@ -166,8 +182,10 @@ if model_path and model_type == "best":
     out(f"  ✓ Found best model: {model_path}")
 elif model_path and model_type == "final":
     out(f"  ✓ Found final model: {model_path}")
-elif model_path and model_type == "checkpoint":
+elif model_path and model_type == "checkpoint_best":
     out(f"  ✓ Found best checkpoint: {model_path}")
+elif model_path and model_type == "checkpoint_last":
+    out(f"  ✓ Found last checkpoint (fallback): {model_path}")
 
 if not model_path:
     out("ERROR: No trained models found!", level="error")
@@ -180,15 +198,29 @@ training_log_path = os.path.join(run_models_dir, "training_log.json")
 if os.path.exists(training_log_path):
     with open(training_log_path, 'r') as f:
         training_log = json.load(f)
-        trained_categories = training_log.get("config", {}).get("categories", ["bottle"])
+        all_trained_categories = training_log.get("config", {}).get("categories", ["bottle"])
         best_epoch = training_log.get("best_epoch", "unknown")
         best_loss = training_log.get("best_val_loss", training_log.get("best_loss", "unknown"))
         out(f"  Training info: Best epoch {best_epoch} with loss {best_loss}")
 else:
-    trained_categories = ["bottle"]  # Default
+    all_trained_categories = ["bottle"]  # Default
 
-    out(f"\n✓ Using {model_type} model")
-    out(f"Will test categories: {', '.join(trained_categories)}\n")
+# Filter categories based on config (if specified)
+requested_categories = EVAL_CONFIG.get("categories")
+if requested_categories:
+    # Only test categories that were both requested AND trained
+    trained_categories = [c for c in requested_categories if c in all_trained_categories]
+    skipped = [c for c in requested_categories if c not in all_trained_categories]
+    if skipped:
+        out(f"  Warning: Skipping untrained categories: {', '.join(skipped)}", level="warning")
+    if not trained_categories:
+        raise RuntimeError(f"None of the requested categories {requested_categories} were trained. Trained: {all_trained_categories}")
+else:
+    # Test all trained categories
+    trained_categories = all_trained_categories
+
+out(f"\n✓ Using {model_type} model")
+out(f"Will test categories: {', '.join(trained_categories)}\n")
 
 # Map categories to the model
 available_models = {category: model_path for category in trained_categories}
