@@ -22,12 +22,11 @@ from pytorch_msssim import ms_ssim
 warnings.filterwarnings('ignore')
 
 DEFAULT_EVAL_CONFIG = {
-    # 
     "seed": 999,
     # "categories": ["bottle", "capsule", "pill", "toothbrush"],  # Test all trained categories
     "categories": ["bottle"],  # Test only specific categories (set to None to test all trained categories)
     "calibration_fraction": 0.3,                # Fraction of data used for calibration vs evaluation
-    "reconstruction_strength": 0.4,            # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
+    "reconstruction_strength": 0.45,            # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
     "reconstruction_guidance_scale": 6.5,       # Guidance scale for reconstruction (higher = more faithful to prompt, but may reduce diversity)
     "reconstruction_steps": 30,                 # Number of steps for reconstruction (lower = faster but less refined)
 }
@@ -247,10 +246,10 @@ def calculate_anomaly_score(original_image, reconstructed_image):
     msssim_distance = 1.0 - msssim_value
 
     combined_score = (
-        0.40 * l1_score + 
+        0.35 * l1_score + 
         0.20 * l2_score + 
         0.10 * max_diff + 
-        0.30 * msssim_distance
+        0.35 * msssim_distance
     )
 
     l1_diff = np.transpose(diff_t.detach().cpu().numpy(), (1, 2, 0))

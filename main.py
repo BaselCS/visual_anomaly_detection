@@ -27,7 +27,7 @@ DEFAULT_CONFIG = {
     "categories": ["bottle"],
     "use_data_augmentation": True,  # Set to True to enable category-specific data augmentation
     "epochs": 150,
-    "batch_size": 2,                  # Optimized for 3060 12GB
+    "batch_size": 4,                  # Optimized for 3060 12GB
     "gradient_accumulation_steps": 4, # Effective batch size = 2 * 4 = 8
     "learning_rate": 1e-7,
     "weight_decay": 1e-2,
