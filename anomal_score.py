@@ -8,6 +8,7 @@ from PIL import Image
 from diffusers import StableDiffusionImg2ImgPipeline
 from torch import nn
 from peft import PeftModel
+import lpips  
 import json
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -225,35 +226,48 @@ out(f"Will test categories: {', '.join(trained_categories)}\n")
 # Map categories to the model
 available_models = {category: model_path for category in trained_categories}
 
+loss_fn_vgg = lpips.LPIPS(net='vgg').to(device) # used for LPIPS scoring 
 # 2. Anomaly Score Function (دالة حساب الخطأ)
 def calculate_anomaly_score(original_image, reconstructed_image):
     """Calculate pixel-wise difference between original and reconstructed images by combining L1, L2, and a lightweight SSIM-inspired structural similarity."""
     resize_op = transforms.Resize((512, 512))
     to_tensor = transforms.ToTensor()
 
+    # تحويل الصور إلى Tensors
     org_t = to_tensor(resize_op(original_image)).to(device)
     rec_t = to_tensor(resize_op(reconstructed_image)).to(device)
 
+    # --- حساب المقاييس التقليدية ---
     diff_t = torch.abs(org_t - rec_t)
     l1_score = float(diff_t.mean().item())
     l2_score = float(torch.mean((org_t - rec_t) ** 2).item())
     max_diff = float(diff_t.max().item())
 
+    # --- حساب MS-SSIM ---
     org_batch = org_t.unsqueeze(0)
     rec_batch = rec_t.unsqueeze(0)
-    
     msssim_value = float(ms_ssim(org_batch, rec_batch, data_range=1.0, size_average=True).item())
     msssim_distance = 1.0 - msssim_value
 
+    # --- حساب LPIPS (المقياس الإدراكي الجديد) ---
+    # ملاحظة: LPIPS يتطلب أن تكون القيم في نطاق [-1, 1] بدلاً من [0, 1]
+    org_lpips = (org_batch * 2) - 1
+    rec_lpips = (rec_batch * 2) - 1
+    
+    with torch.no_grad():
+        lpips_distance = float(loss_fn_vgg(org_lpips, rec_lpips).item())
+
+    # --- دمج النتائج بالمعادلة الجديدة ---
+    # قمت بتوزيع الأوزان لتعطي LPIPS دوراً محورياً في القرار
     combined_score = (
-        0.35 * l1_score + 
-        0.20 * l2_score + 
+        0.30 * l1_score +         # التركيز على فروق الألوان
+        0.10 * l2_score + 
         0.10 * max_diff + 
-        0.35 * msssim_distance
+        0.25 * msssim_distance +  # التركيز على الهيكل
+        0.25 * lpips_distance     # التركيز على التفاصيل الإدراكية (الجديد)
     )
 
     l1_diff = np.transpose(diff_t.detach().cpu().numpy(), (1, 2, 0))
-    
     return combined_score, l1_diff
 
 # 3. Testing Images & Scoring 
