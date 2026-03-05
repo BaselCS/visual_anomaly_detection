@@ -22,6 +22,7 @@ from pytorch_msssim import ms_ssim
 
 warnings.filterwarnings('ignore')
 
+
 DEFAULT_EVAL_CONFIG = {
     "seed": 999,
     # "categories": ["bottle", "capsule", "pill", "toothbrush"],  # Test all trained categories
