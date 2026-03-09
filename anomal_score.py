@@ -28,7 +28,7 @@ DEFAULT_EVAL_CONFIG = {
     # "categories": ["bottle", "capsule", "pill", "toothbrush"],  # Test all trained categories
     "categories": ["bottle"],  # Test only specific categories (set to None to test all trained categories)
     "calibration_fraction": 0.3,                # Fraction of data used for calibration vs evaluation
-    "reconstruction_strength": 0.35,            # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
+    "reconstruction_strength": 0.39,            # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
     "reconstruction_guidance_scale": 5.5,       # Guidance scale for reconstruction (higher = more faithful to prompt, but may reduce diversity)
     "reconstruction_steps": 30,                 # Number of steps for reconstruction (lower = faster but less refined)
 }
@@ -261,11 +261,11 @@ def calculate_anomaly_score(original_image, reconstructed_image):
     # --- دمج النتائج بالمعادلة الجديدة ---
     # قمت بتوزيع الأوزان لتعطي LPIPS دوراً محورياً في القرار
     combined_score = (
-        0.30 * l1_score +         # التركيز على فروق الألوان
+        0.10 * l1_score +         # التركيز على فروق الألوان
         0.10 * l2_score + 
         0.10 * max_diff + 
-        0.25 * msssim_distance +  # التركيز على الهيكل
-        0.25 * lpips_distance     # التركيز على التفاصيل الإدراكية (الجديد)
+        0.30 * msssim_distance +  # التركيز على الهيكل
+        0.40 * lpips_distance     # التركيز على التفاصيل الإدراكية (الجديد)
     )
 
     l1_diff = np.transpose(diff_t.detach().cpu().numpy(), (1, 2, 0))

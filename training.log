@@ -4109,3 +4109,146 @@ Generating training plots...
 ==================================================
 2026-03-09 23:37:39,563 - INFO - All done! You can now run anomal_score.py to test the model.
 2026-03-09 23:37:39,563 - INFO - ==================================================
+2026-03-09 23:58:53,456 - INFO - Training Configuration:
+2026-03-09 23:58:53,456 - INFO - Training Configuration:
+2026-03-09 23:58:53,457 - INFO -   categories: ['bottle']
+2026-03-09 23:58:53,457 - INFO -   use_data_augmentation: True
+2026-03-09 23:58:53,457 - INFO -   epochs: 150
+2026-03-09 23:58:53,457 - INFO -   batch_size: 4
+2026-03-09 23:58:53,457 - INFO -   gradient_accumulation_steps: 4
+2026-03-09 23:58:53,457 - INFO -   learning_rate: 1e-07
+2026-03-09 23:58:53,457 - INFO -   weight_decay: 0.01
+2026-03-09 23:58:53,457 - INFO -   max_grad_norm: 1.0
+2026-03-09 23:58:53,457 - INFO -   lr_scheduler: cosine
+2026-03-09 23:58:53,457 - INFO -   lr_warmup_steps: 100
+2026-03-09 23:58:53,457 - INFO -   lr_eta_min: 1e-06
+2026-03-09 23:58:53,457 - INFO -   save_every_n_epochs: 5
+2026-03-09 23:58:53,457 - INFO -   save_log_every_n_epochs: 5
+2026-03-09 23:58:53,457 - INFO -   output_dir: trained_models/train22
+2026-03-09 23:58:53,457 - INFO -   image_size: 512
+2026-03-09 23:58:53,457 - INFO -   train_split: 0.9
+2026-03-09 23:58:53,457 - INFO -   seed: 999
+2026-03-09 23:58:53,457 - INFO -   early_stop_patience: 20
+2026-03-09 23:58:53,457 - INFO -   early_stop_min_delta: 0.0001
+2026-03-09 23:58:53,457 - INFO -   min_epochs_before_early_stop: 30
+2026-03-09 23:58:53,457 - INFO -   num_workers: 2
+2026-03-09 23:58:53,457 - INFO - ==================================================
+2026-03-09 23:58:53,457 - INFO - 
+Loading Stable Diffusion model...
+2026-03-09 23:59:00,627 - INFO - ✓ Model loaded successfully
+2026-03-09 23:59:00,628 - INFO - 
+Applying LoRA configuration...
+2026-03-09 23:59:00,773 - INFO - LoRA applied:
+2026-03-09 23:59:00,776 - INFO - 
+Preparing dataset...
+2026-03-09 23:59:00,778 - INFO - Loaded 600 training images from 1 categories
+2026-03-09 23:59:00,778 - INFO -   bottle: 600 images
+2026-03-09 23:59:00,779 - INFO - 
+Dataset split: 540 training, 60 validation
+2026-03-09 23:59:00,779 - INFO - 
+Dataset split: 540 training, 60 validation
+2026-03-09 23:59:00,787 - INFO - 
+Starting training on 1 categories...
+2026-03-09 23:59:00,787 - INFO - Total epochs: 150
+2026-03-09 23:59:00,787 - INFO - Effective batch size: 16
+2026-03-09 23:59:00,787 - INFO - 
+==================================================
+2026-03-10 00:01:33,981 - INFO - Running validation...
+2026-03-10 00:01:44,192 - INFO - Epoch 1 finished. Train Loss: 0.0957 | Val Loss: 0.0958 | LR: 3.50e-08
+2026-03-10 00:01:44,192 - INFO -   ✓ New best validation loss! Saving best model...
+2026-03-10 00:01:44,272 - INFO -   ✓ Best model checkpoint saved to trained_models/train22/checkpoint_epoch_1_BEST
+2026-03-10 00:04:10,532 - INFO - Running validation...
+2026-03-10 00:04:20,671 - INFO - Epoch 2 finished. Train Loss: 0.0969 | Val Loss: 0.0686 | LR: 6.90e-08
+2026-03-10 00:04:20,671 - INFO -   ✓ New best validation loss! Saving best model...
+2026-03-10 00:04:20,737 - INFO -   ✓ Best model checkpoint saved to trained_models/train22/checkpoint_epoch_2_BEST
+2026-03-10 00:06:54,471 - INFO - Running validation...
+2026-03-10 00:07:04,608 - INFO - Epoch 3 finished. Train Loss: 0.1003 | Val Loss: 0.0620 | LR: 1.00e-06
+2026-03-10 00:07:04,608 - INFO -   ✓ New best validation loss! Saving best model...
+2026-03-10 00:07:04,680 - INFO -   ✓ Best model checkpoint saved to trained_models/train22/checkpoint_epoch_3_BEST
+2026-03-10 00:09:40,671 - INFO - Running validation...
+2026-03-10 00:09:50,808 - INFO - Epoch 4 finished. Train Loss: 0.0933 | Val Loss: 0.0644 | LR: 1.00e-06
+2026-03-10 00:12:25,739 - INFO - Running validation...
+2026-03-10 00:12:35,859 - INFO - Epoch 5 finished. Train Loss: 0.0895 | Val Loss: 0.0764 | LR: 1.00e-06
+2026-03-10 00:12:35,897 - INFO - ✓ Checkpoint saved to trained_models/train22/checkpoint_epoch_5
+2026-03-10 00:14:58,139 - INFO - Running validation...
+2026-03-10 00:15:06,582 - INFO - Epoch 6 finished. Train Loss: 0.0917 | Val Loss: 0.0689 | LR: 1.00e-06
+2026-03-10 00:17:16,301 - INFO - Running validation...
+2026-03-10 00:17:24,734 - INFO - Epoch 7 finished. Train Loss: 0.0837 | Val Loss: 0.0732 | LR: 1.00e-06
+2026-03-10 00:19:34,407 - INFO - Running validation...
+2026-03-10 00:19:42,828 - INFO - Epoch 8 finished. Train Loss: 0.1011 | Val Loss: 0.0922 | LR: 1.00e-06
+2026-03-10 00:21:52,246 - INFO - Running validation...
+2026-03-10 00:22:00,671 - INFO - Epoch 9 finished. Train Loss: 0.1024 | Val Loss: 0.0783 | LR: 1.00e-06
+2026-03-10 00:24:10,101 - INFO - Running validation...
+2026-03-10 00:24:18,537 - INFO - Epoch 10 finished. Train Loss: 0.0856 | Val Loss: 0.0845 | LR: 1.00e-06
+2026-03-10 00:24:18,571 - INFO - ✓ Checkpoint saved to trained_models/train22/checkpoint_epoch_10
+2026-03-10 00:26:28,286 - INFO - Running validation...
+2026-03-10 00:26:36,727 - INFO - Epoch 11 finished. Train Loss: 0.1020 | Val Loss: 0.0764 | LR: 1.00e-06
+2026-03-10 00:28:46,378 - INFO - Running validation...
+2026-03-10 00:28:54,813 - INFO - Epoch 12 finished. Train Loss: 0.0995 | Val Loss: 0.0833 | LR: 1.00e-06
+2026-03-10 00:31:04,484 - INFO - Running validation...
+2026-03-10 00:31:12,915 - INFO - Epoch 13 finished. Train Loss: 0.0881 | Val Loss: 0.1262 | LR: 1.00e-06
+2026-03-10 00:33:22,542 - INFO - Running validation...
+2026-03-10 00:33:30,977 - INFO - Epoch 14 finished. Train Loss: 0.1028 | Val Loss: 0.1239 | LR: 1.00e-06
+2026-03-10 00:35:40,645 - INFO - Running validation...
+2026-03-10 00:35:49,078 - INFO - Epoch 15 finished. Train Loss: 0.0958 | Val Loss: 0.0951 | LR: 1.00e-06
+2026-03-10 00:35:49,113 - INFO - ✓ Checkpoint saved to trained_models/train22/checkpoint_epoch_15
+2026-03-10 00:37:58,609 - INFO - Running validation...
+2026-03-10 00:38:07,053 - INFO - Epoch 16 finished. Train Loss: 0.0964 | Val Loss: 0.1139 | LR: 1.00e-06
+2026-03-10 00:40:16,555 - INFO - Running validation...
+2026-03-10 00:40:24,975 - INFO - Epoch 17 finished. Train Loss: 0.0948 | Val Loss: 0.0701 | LR: 1.00e-06
+2026-03-10 00:42:34,463 - INFO - Running validation...
+2026-03-10 00:42:42,887 - INFO - Epoch 18 finished. Train Loss: 0.0985 | Val Loss: 0.0764 | LR: 1.00e-06
+2026-03-10 00:44:52,330 - INFO - Running validation...
+2026-03-10 00:45:00,750 - INFO - Epoch 19 finished. Train Loss: 0.0987 | Val Loss: 0.1191 | LR: 1.00e-06
+2026-03-10 00:47:10,208 - INFO - Running validation...
+2026-03-10 00:47:18,638 - INFO - Epoch 20 finished. Train Loss: 0.0996 | Val Loss: 0.1036 | LR: 1.00e-06
+2026-03-10 00:47:18,675 - INFO - ✓ Checkpoint saved to trained_models/train22/checkpoint_epoch_20
+2026-03-10 00:49:28,137 - INFO - Running validation...
+2026-03-10 00:49:36,561 - INFO - Epoch 21 finished. Train Loss: 0.0883 | Val Loss: 0.0766 | LR: 1.00e-06
+2026-03-10 00:51:46,013 - INFO - Running validation...
+2026-03-10 00:51:54,447 - INFO - Epoch 22 finished. Train Loss: 0.0903 | Val Loss: 0.0749 | LR: 1.00e-06
+2026-03-10 00:54:03,765 - INFO - Running validation...
+2026-03-10 00:54:12,192 - INFO - Epoch 23 finished. Train Loss: 0.1019 | Val Loss: 0.0900 | LR: 1.00e-06
+2026-03-10 00:56:21,498 - INFO - Running validation...
+2026-03-10 00:56:29,937 - INFO - Epoch 24 finished. Train Loss: 0.0975 | Val Loss: 0.0812 | LR: 1.00e-06
+2026-03-10 00:58:39,609 - INFO - Running validation...
+2026-03-10 00:58:48,047 - INFO - Epoch 25 finished. Train Loss: 0.0930 | Val Loss: 0.1095 | LR: 1.00e-06
+2026-03-10 00:58:48,083 - INFO - ✓ Checkpoint saved to trained_models/train22/checkpoint_epoch_25
+2026-03-10 01:00:57,690 - INFO - Running validation...
+2026-03-10 01:01:06,112 - INFO - Epoch 26 finished. Train Loss: 0.0950 | Val Loss: 0.1013 | LR: 1.00e-06
+2026-03-10 01:03:15,746 - INFO - Running validation...
+2026-03-10 01:03:24,175 - INFO - Epoch 27 finished. Train Loss: 0.0891 | Val Loss: 0.0814 | LR: 1.00e-06
+2026-03-10 01:05:33,666 - INFO - Running validation...
+2026-03-10 01:05:42,090 - INFO - Epoch 28 finished. Train Loss: 0.0950 | Val Loss: 0.0830 | LR: 1.00e-06
+2026-03-10 01:07:51,563 - INFO - Running validation...
+2026-03-10 01:07:59,991 - INFO - Epoch 29 finished. Train Loss: 0.0898 | Val Loss: 0.0862 | LR: 1.00e-06
+2026-03-10 01:10:09,593 - INFO - Running validation...
+2026-03-10 01:10:18,012 - INFO - Epoch 30 finished. Train Loss: 0.0948 | Val Loss: 0.1258 | LR: 1.00e-06
+2026-03-10 01:10:18,013 - WARNING - 
+⚠ Early stopping triggered at epoch 30: no val-loss improvement > 0.0001 for 27 epochs.
+2026-03-10 01:10:18,013 - WARNING -   Best epoch was 3 with val loss 0.0620
+2026-03-10 01:10:18,013 - INFO - 
+==================================================
+2026-03-10 01:10:18,013 - INFO - Training completed!
+2026-03-10 01:10:18,013 - INFO - 
+ Training Summary:
+2026-03-10 01:10:18,013 - INFO -   Best Epoch: 3
+2026-03-10 01:10:18,013 - INFO -     Train Loss: 0.1003
+2026-03-10 01:10:18,013 - INFO -     Val Loss: 0.0620
+2026-03-10 01:10:18,013 - INFO -   Final Epoch: 150
+2026-03-10 01:10:18,013 - INFO -     Train Loss: 0.0948
+2026-03-10 01:10:18,013 - INFO -     Val Loss: 0.1258
+2026-03-10 01:10:18,013 - WARNING -   Final model has higher validation loss - use 'best_model' directory instead!
+2026-03-10 01:10:18,013 - INFO - 
+Saving final trained model...
+2026-03-10 01:10:18,048 - INFO - Model saved to trained_models/train22/final_model
+2026-03-10 01:10:18,048 - INFO - 
+Generating test samples...
+2026-03-10 01:10:22,740 - INFO - Generated test sample for bottle
+2026-03-10 01:10:22,741 - INFO - 
+Generating training plots...
+2026-03-10 01:10:23,467 - INFO - ✓ Training plot saved to trained_models/train22/training_validation_plot.png
+2026-03-10 01:10:23,468 - INFO - 
+==================================================
+2026-03-10 01:10:23,468 - INFO - All done! You can now run anomal_score.py to test the model.
+2026-03-10 01:10:23,468 - INFO - ==================================================
