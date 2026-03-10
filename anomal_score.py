@@ -28,8 +28,8 @@ DEFAULT_EVAL_CONFIG = {
     # "categories": ["bottle", "capsule", "pill", "toothbrush"],  # Test all trained categories
     "categories": ["bottle"],  # Test only specific categories (set to None to test all trained categories)
     "calibration_fraction": 0.3,                # Fraction of data used for calibration vs evaluation
-    "reconstruction_strength": 0.40,            # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
-    "reconstruction_guidance_scale": 5.5,       # Guidance scale for reconstruction (higher = more faithful to prompt, but may reduce diversity)
+    "reconstruction_strength": 0.48,            # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
+    "reconstruction_guidance_scale": 8,       # Guidance scale for reconstruction (higher = more faithful to prompt, but may reduce diversity)
     "reconstruction_steps": 30,                 # Number of steps for reconstruction (lower = faster but less refined)
 }
 
