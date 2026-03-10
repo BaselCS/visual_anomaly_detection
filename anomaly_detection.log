@@ -1089,3 +1089,65 @@ Final Assessment:
 2026-03-10 01:26:26,148 - INFO -   Recall: 0.7045
 2026-03-10 01:26:26,148 - INFO -   F1-Score: 0.7949
 2026-03-10 01:26:26,148 - INFO - ==================================================
+2026-03-10 02:54:49,379 - INFO - Detecting trained models...
+2026-03-10 02:54:49,380 - INFO - Detected selected training run: trained_models/train9
+2026-03-10 02:54:49,380 - INFO -   ✓ Found best model: trained_models/train9/best_model
+2026-03-10 02:54:49,380 - INFO -   Training info: Best epoch 9 with loss 0.05807073492752878
+2026-03-10 02:54:49,380 - INFO - 
+✓ Using best model
+2026-03-10 02:54:49,380 - INFO - Will test categories: bottle
+
+2026-03-10 02:54:50,720 - INFO - 
+Starting Anomaly Detection...
+==================================================
+2026-03-10 02:54:50,720 - INFO - 
+======================================================================
+2026-03-10 02:54:50,720 - INFO -  TESTING CATEGORY: BOTTLE
+2026-03-10 02:54:50,720 - INFO -    Model: trained_models/train9/best_model
+2026-03-10 02:54:50,720 - INFO - ======================================================================
+2026-03-10 02:54:50,720 - INFO - Loading base model...
+2026-03-10 02:54:59,549 - INFO -  Loaded trained model for bottle
+
+2026-03-10 02:54:59,549 - INFO - 
+ Processing category: BOTTLE
+2026-03-10 03:09:18,264 - INFO -   ✓ Processed 83 images
+2026-03-10 03:09:18,264 - INFO - 
+==================================================
+2026-03-10 03:09:18,264 - INFO - 
+ Calculating automatic threshold and metrics...
+2026-03-10 03:09:18,865 - INFO - 
+ Proxy Threshold (mean of per-category thresholds): 0.1203
+2026-03-10 03:09:18,865 - INFO -  AUC-ROC Score (evaluation split): 0.7744
+2026-03-10 03:09:19,121 - INFO -  ROC curve saved to anomaly_detection_results/roc_curve_14.png
+2026-03-10 03:09:19,121 - INFO - 
+ Performance Metrics (evaluation split):
+2026-03-10 03:09:19,121 - INFO -   Accuracy:          0.4655 (46.55%)
+2026-03-10 03:09:19,121 - INFO -   Balanced Accuracy: 0.6234
+2026-03-10 03:09:19,121 - INFO -   Precision:         0.9333
+2026-03-10 03:09:19,121 - INFO -   Recall:            0.3182
+2026-03-10 03:09:19,121 - INFO -   F1-Score:          0.4746
+2026-03-10 03:09:19,121 - INFO - 
+ Results by Category:
+2026-03-10 03:09:19,122 - INFO - 
+  BOTTLE:
+2026-03-10 03:09:19,122 - INFO -     Good images:     20 | Avg score: 0.1091
+2026-03-10 03:09:19,122 - INFO -     Defect images:   63 | Avg score: 0.1194
+2026-03-10 03:09:19,122 - INFO -     Separation:     0.0103 ✓
+2026-03-10 03:09:19,122 - INFO - 
+✓ Results saved to anomaly_detection_results/detection_results_14.json (run #14)
+2026-03-10 03:09:19,122 - INFO -  Total result files: 15
+2026-03-10 03:09:19,122 - INFO - 
+ Generating training visualization...
+2026-03-10 03:09:19,721 - INFO -  Training visualization saved to anomaly_detection_results/training_visualization_14.png
+2026-03-10 03:09:19,721 - INFO - 
+==================================================
+2026-03-10 03:09:19,721 - INFO - 
+Final Assessment:
+2026-03-10 03:09:19,721 - INFO -   AUC-ROC Score (evaluation split): 0.7744
+2026-03-10 03:09:19,721 - INFO -   Proxy Threshold (mean per-category): 0.1203
+2026-03-10 03:09:19,721 - INFO -   Accuracy: 0.4655 (46.55%)
+2026-03-10 03:09:19,721 - INFO -   Balanced Accuracy: 0.6234
+2026-03-10 03:09:19,721 - INFO -   Precision: 0.9333
+2026-03-10 03:09:19,721 - INFO -   Recall: 0.3182
+2026-03-10 03:09:19,721 - INFO -   F1-Score: 0.4746
+2026-03-10 03:09:19,721 - INFO - ==================================================
