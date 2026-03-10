@@ -27,6 +27,7 @@ DEFAULT_EVAL_CONFIG = {
     "seed": 999,
     # "categories": ["bottle", "capsule", "pill", "toothbrush"],  # Test all trained categories
     "categories": ["bottle"],  # Test only specific categories (set to None to test all trained categories)
+    "model_path": "trained_models/train9/best_model",                        # Optional explicit model path (e.g., trained_models/train10/best_model)
     "calibration_fraction": 0.3,                # Fraction of data used for calibration vs evaluation
     "reconstruction_strength": 0.46,            # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
     "reconstruction_guidance_scale": 8,       # Guidance scale for reconstruction (higher = more faithful to prompt, but may reduce diversity)
@@ -56,6 +57,7 @@ def out(message: str, level: str = "info") -> None:
 
 EVAL_CONFIG = dict(DEFAULT_EVAL_CONFIG)
 EVAL_SEED = EVAL_CONFIG["seed"]
+CONFIGURED_MODEL_PATH = EVAL_CONFIG.get("model_path")
 CALIBRATION_FRACTION = EVAL_CONFIG["calibration_fraction"]
 RECONSTRUCTION_STRENGTH = EVAL_CONFIG["reconstruction_strength"]
 RECONSTRUCTION_GUIDANCE_SCALE = EVAL_CONFIG["reconstruction_guidance_scale"]
@@ -174,20 +176,44 @@ trained_models_dir = "trained_models"
 run_models_dir = resolve_best_train_run(trained_models_dir)
 
 out("Detecting trained models...")
-if run_models_dir != trained_models_dir:
-    out(f"Detected selected training run: {run_models_dir}")
-else:
-    out(f"Using default model directory: {run_models_dir}")
 
-model_path, model_type = resolve_model_path(run_models_dir)
-if model_path and model_type == "best":
-    out(f"  ✓ Found best model: {model_path}")
-elif model_path and model_type == "final":
-    out(f"  ✓ Found final model: {model_path}")
-elif model_path and model_type == "checkpoint_best":
-    out(f"  ✓ Found best checkpoint: {model_path}")
-elif model_path and model_type == "checkpoint_last":
-    out(f"  ✓ Found last checkpoint (fallback): {model_path}")
+configured_model_path = CONFIGURED_MODEL_PATH
+if isinstance(configured_model_path, str):
+    configured_model_path = configured_model_path.strip()
+if not configured_model_path:
+    configured_model_path = None
+
+if configured_model_path:
+    configured_model_path = os.path.abspath(os.path.expanduser(configured_model_path))
+    if not os.path.exists(configured_model_path):
+        raise RuntimeError(f"Configured model_path does not exist: {configured_model_path}")
+
+    path_name = os.path.basename(configured_model_path)
+    if path_name in {"best_model", "final_model"} or path_name.startswith("checkpoint_epoch_"):
+        model_path = configured_model_path
+        model_type = "configured"
+        run_models_dir = os.path.dirname(configured_model_path)
+    else:
+        run_models_dir = configured_model_path
+        model_path, detected_type = resolve_model_path(run_models_dir)
+        model_type = f"configured_{detected_type}" if detected_type else None
+
+    out(f"Using configured model path: {configured_model_path}")
+else:
+    if run_models_dir != trained_models_dir:
+        out(f"Detected selected training run: {run_models_dir}")
+    else:
+        out(f"Using default model directory: {run_models_dir}")
+
+    model_path, model_type = resolve_model_path(run_models_dir)
+    if model_path and model_type == "best":
+        out(f"  ✓ Found best model: {model_path}")
+    elif model_path and model_type == "final":
+        out(f"  ✓ Found final model: {model_path}")
+    elif model_path and model_type == "checkpoint_best":
+        out(f"  ✓ Found best checkpoint: {model_path}")
+    elif model_path and model_type == "checkpoint_last":
+        out(f"  ✓ Found last checkpoint (fallback): {model_path}")
 
 if not model_path:
     out("ERROR: No trained models found!", level="error")
