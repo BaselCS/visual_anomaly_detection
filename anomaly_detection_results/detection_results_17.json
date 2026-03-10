@@ -1,0 +1,448 @@
+{
+  "timestamp": "20260310_205132",
+  "run_directory": "trained_models/train9",
+  "model_type": "best",
+  "model_path": "trained_models/train9/best_model",
+  "evaluation_seed": 999,
+  "calibration_fraction": 0.3,
+  "per_category_thresholds": {
+    "bottle": 0.09907565787434577
+  },
+  "calibration_summary": {
+    "bottle": {
+      "direction": "higher_is_defect",
+      "calibration_auc": 0.7719298245614035,
+      "split_note": null,
+      "calibration_count": 25,
+      "evaluation_count": 58
+    }
+  },
+  "optimal_threshold": 0.09907565787434577,
+  "metrics": {
+    "auc_roc": 0.7581168831168832,
+    "accuracy": 0.5,
+    "balanced_accuracy": 0.6461038961038961,
+    "precision": 0.9411764705882353,
+    "recall": 0.36363636363636365,
+    "f1_score": 0.5245901639344263
+  },
+  "results": {
+    "bottle": {
+      "bottle/broken_large/bottle_broken_large_0001.png": {
+        "type": "broken_large",
+        "score": 0.10893945917487144,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0002.png": {
+        "type": "broken_large",
+        "score": 0.11081084981560707,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0003.png": {
+        "type": "broken_large",
+        "score": 0.11236215401440858,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0004.png": {
+        "type": "broken_large",
+        "score": 0.11961819492280483,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0005.png": {
+        "type": "broken_large",
+        "score": 0.09513940159231424,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0006.png": {
+        "type": "broken_large",
+        "score": 0.09216052275151014,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0007.png": {
+        "type": "broken_large",
+        "score": 0.10728754410520196,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0008.png": {
+        "type": "broken_large",
+        "score": 0.1115023098886013,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0009.png": {
+        "type": "broken_large",
+        "score": 0.109599132463336,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0010.png": {
+        "type": "broken_large",
+        "score": 0.09924264112487435,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0011.png": {
+        "type": "broken_large",
+        "score": 0.10851696850731968,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0012.png": {
+        "type": "broken_large",
+        "score": 0.10154180647805333,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0013.png": {
+        "type": "broken_large",
+        "score": 0.09907565787434577,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0014.png": {
+        "type": "broken_large",
+        "score": 0.11711744889616967,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0015.png": {
+        "type": "broken_large",
+        "score": 0.09210655707865953,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0016.png": {
+        "type": "broken_large",
+        "score": 0.09094986850395798,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0017.png": {
+        "type": "broken_large",
+        "score": 0.10995850656181574,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0018.png": {
+        "type": "broken_large",
+        "score": 0.10653934665024281,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0019.png": {
+        "type": "broken_large",
+        "score": 0.11516339126974344,
+        "is_defect": true
+      },
+      "bottle/broken_large/bottle_broken_large_0020.png": {
+        "type": "broken_large",
+        "score": 0.12139358893036842,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0001.png": {
+        "type": "broken_small",
+        "score": 0.09082990307360887,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0002.png": {
+        "type": "broken_small",
+        "score": 0.09097124189138411,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0003.png": {
+        "type": "broken_small",
+        "score": 0.10665350258350373,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0004.png": {
+        "type": "broken_small",
+        "score": 0.09900274984538554,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0005.png": {
+        "type": "broken_small",
+        "score": 0.09589226022362708,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0006.png": {
+        "type": "broken_small",
+        "score": 0.08708415273576975,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0007.png": {
+        "type": "broken_small",
+        "score": 0.09020499791949987,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0008.png": {
+        "type": "broken_small",
+        "score": 0.09511603973805904,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0009.png": {
+        "type": "broken_small",
+        "score": 0.11273306049406528,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0010.png": {
+        "type": "broken_small",
+        "score": 0.08458439158275724,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0011.png": {
+        "type": "broken_small",
+        "score": 0.08909209165722132,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0012.png": {
+        "type": "broken_small",
+        "score": 0.09572179932147264,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0013.png": {
+        "type": "broken_small",
+        "score": 0.10779699757695198,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0014.png": {
+        "type": "broken_small",
+        "score": 0.09820268750190735,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0015.png": {
+        "type": "broken_small",
+        "score": 0.07747836904600262,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0016.png": {
+        "type": "broken_small",
+        "score": 0.10089552029967308,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0017.png": {
+        "type": "broken_small",
+        "score": 0.09494809750467538,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0018.png": {
+        "type": "broken_small",
+        "score": 0.10062041589990257,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0019.png": {
+        "type": "broken_small",
+        "score": 0.10465757995843887,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0020.png": {
+        "type": "broken_small",
+        "score": 0.095445301476866,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0021.png": {
+        "type": "broken_small",
+        "score": 0.10787891838699579,
+        "is_defect": true
+      },
+      "bottle/broken_small/bottle_broken_small_0022.png": {
+        "type": "broken_small",
+        "score": 0.09153591245412826,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0001.png": {
+        "type": "contamination",
+        "score": 0.08895159363746642,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0002.png": {
+        "type": "contamination",
+        "score": 0.08965137246996163,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0003.png": {
+        "type": "contamination",
+        "score": 0.09930737428367137,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0004.png": {
+        "type": "contamination",
+        "score": 0.09720944091677665,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0005.png": {
+        "type": "contamination",
+        "score": 0.09591080844402314,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0006.png": {
+        "type": "contamination",
+        "score": 0.09955104487016797,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0007.png": {
+        "type": "contamination",
+        "score": 0.09160301173105836,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0008.png": {
+        "type": "contamination",
+        "score": 0.10840679351240395,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0009.png": {
+        "type": "contamination",
+        "score": 0.10202962979674339,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0010.png": {
+        "type": "contamination",
+        "score": 0.0928283641114831,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0011.png": {
+        "type": "contamination",
+        "score": 0.08871583500877023,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0012.png": {
+        "type": "contamination",
+        "score": 0.07866927683353422,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0013.png": {
+        "type": "contamination",
+        "score": 0.08235289473086596,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0014.png": {
+        "type": "contamination",
+        "score": 0.09081909004598855,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0015.png": {
+        "type": "contamination",
+        "score": 0.08591422187164424,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0016.png": {
+        "type": "contamination",
+        "score": 0.09031136529520153,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0017.png": {
+        "type": "contamination",
+        "score": 0.08150206413120031,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0018.png": {
+        "type": "contamination",
+        "score": 0.09710613656789063,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0019.png": {
+        "type": "contamination",
+        "score": 0.07860710080713033,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0020.png": {
+        "type": "contamination",
+        "score": 0.09298988003283738,
+        "is_defect": true
+      },
+      "bottle/contamination/bottle_contamination_0021.png": {
+        "type": "contamination",
+        "score": 0.10121216597035526,
+        "is_defect": true
+      },
+      "bottle/good/bottle_good_0001.png": {
+        "type": "good",
+        "score": 0.08749182932078839,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0002.png": {
+        "type": "good",
+        "score": 0.08038724781945347,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0003.png": {
+        "type": "good",
+        "score": 0.0980176094919443,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0004.png": {
+        "type": "good",
+        "score": 0.08027837919071316,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0005.png": {
+        "type": "good",
+        "score": 0.0825078608468175,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0006.png": {
+        "type": "good",
+        "score": 0.08360642837360502,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0007.png": {
+        "type": "good",
+        "score": 0.08684057239443063,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0008.png": {
+        "type": "good",
+        "score": 0.09050405267626047,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0009.png": {
+        "type": "good",
+        "score": 0.0753787875175476,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0010.png": {
+        "type": "good",
+        "score": 0.08889634208753705,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0011.png": {
+        "type": "good",
+        "score": 0.09676763946190475,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0012.png": {
+        "type": "good",
+        "score": 0.09396191397681833,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0013.png": {
+        "type": "good",
+        "score": 0.09445171523839235,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0014.png": {
+        "type": "good",
+        "score": 0.08334386218339204,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0015.png": {
+        "type": "good",
+        "score": 0.08570175105705857,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0016.png": {
+        "type": "good",
+        "score": 0.09037812668830156,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0017.png": {
+        "type": "good",
+        "score": 0.09075246527791023,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0018.png": {
+        "type": "good",
+        "score": 0.0927103036083281,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0019.png": {
+        "type": "good",
+        "score": 0.09936235370114445,
+        "is_defect": false
+      },
+      "bottle/good/bottle_good_0020.png": {
+        "type": "good",
+        "score": 0.09843715503811835,
+        "is_defect": false
+      }
+    }
+  }
+}
