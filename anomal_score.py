@@ -30,7 +30,7 @@ DEFAULT_EVAL_CONFIG = {
     "model_path": "trained_models/train9/best_model",                        # Optional explicit model path (e.g., trained_models/train10/best_model)
     "calibration_fraction": 0.3,                # Fraction of data used for calibration vs evaluation
     "reconstruction_strength": 0.40,  # Strength for img2img reconstruction (0.0 = perfect copy, 1.0 = full generation)
-    "reconstruction_guidance_scale": 8,  # Guidance scale for reconstruction (higher = more faithful to prompt, but may reduce diversity)
+    "reconstruction_guidance_scale": 6.5,  # Guidance scale for reconstruction (higher = more faithful to prompt, but may reduce diversity)
     "reconstruction_steps": 30,                 # Number of steps for reconstruction (lower = faster but less refined)
 }
 
@@ -256,50 +256,40 @@ available_models = {category: model_path for category in trained_categories}
 loss_fn_vgg = lpips.LPIPS(net='vgg').to(device) # used for LPIPS scoring 
 # 2. Anomaly Score Function (دالة حساب الخطأ)
 def calculate_anomaly_score(original_image, reconstructed_image):
-    """Calculate pixel-wise difference between original and reconstructed images by combining L1, L2, and a lightweight SSIM-inspired structural similarity."""
     resize_op = transforms.Resize((512, 512))
     to_tensor = transforms.ToTensor()
 
-    # تحويل الصور إلى Tensors
     org_t = to_tensor(resize_op(original_image)).to(device)
     rec_t = to_tensor(resize_op(reconstructed_image)).to(device)
 
-    # --- حساب المقاييس التقليدية ---
+    # --- حساب الفرق (Diff Map) ---
     diff_t = torch.abs(org_t - rec_t)
-    l1_score = float(diff_t.mean().item())
-    # l2_score = float(torch.mean((org_t - rec_t) ** 2).item())
-    # max_diff = float(diff_t.max().item())
-
-    # --- حساب MS-SSIM ---
-    org_batch = org_t.unsqueeze(0)
-    rec_batch = rec_t.unsqueeze(0)
-    msssim_value = float(ms_ssim(org_batch, rec_batch, data_range=1.0, size_average=True).item())
-    msssim_distance = 1.0 - msssim_value
-
-    # --- حساب LPIPS (المقياس الإدراكي الجديد) ---
-    # ملاحظة: LPIPS يتطلب أن تكون القيم في نطاق [-1, 1] بدلاً من [0, 1]
-    org_lpips = (org_batch * 2) - 1
-    rec_lpips = (rec_batch * 2) - 1
     
+    # 1. السكور العام (Global)
+    l1_score = float(diff_t.mean().item())
+
+    # 2. السكور المحلي (Local Patch Score) - الجديد
+    # نستخدم MaxPool لاكتشاف أعلى سكور في منطقة 16x16 بكسل
+    local_max = torch.nn.functional.max_pool2d(diff_t.unsqueeze(0), kernel_size=16, stride=8)
+    max_patch_score = float(local_max.max().item())
+
+    # --- حساب MS-SSIM و LPIPS ---
+    org_batch, rec_batch = org_t.unsqueeze(0), rec_t.unsqueeze(0)
+    msssim_distance = 1.0 - float(ms_ssim(org_batch, rec_batch, data_range=1.0).item())
+    
+    org_lpips, rec_lpips = (org_batch * 2) - 1, (rec_batch * 2) - 1
     with torch.no_grad():
         lpips_distance = float(loss_fn_vgg(org_lpips, rec_lpips).item())
 
-    # --- دمج النتائج بالمعادلة الجديدة ---
-    # قمت بتوزيع الأوزان لتعطي LPIPS دوراً محورياً في القرار
+    # --- المعادلة المطورة لكشف العيوب الصغيرة ---
     combined_score = (
-        # 0.10 * l1_score +         # التركيز على فروق الألوان
-        # 0.10 * l2_score + 
-        # 0.10 * max_diff + 
-        # 0.30 * msssim_distance +  # التركيز على الهيكل
-        # 0.40 * lpips_distance     # التركيز على التفاصيل الإدراكية (الجديد)
-        0.35 * l1_score + 
-    0.35 * msssim_distance + 
-    0.30 * lpips_distance  # رفع وزن الإدراك البصري لكشف العيوب "الغريبة"
+        0.15 * l1_score + 
+        0.25 * msssim_distance + 
+        0.30 * lpips_distance + 
+        0.30 * max_patch_score  # التركيز على أعلى نقطة شذوذ
     )
 
-    l1_diff = np.transpose(diff_t.detach().cpu().numpy(), (1, 2, 0))
-    return combined_score, l1_diff
-
+    return combined_score, np.transpose(diff_t.detach().cpu().numpy(), (1, 2, 0))
 # 3. Testing Images & Scoring 
 all_results = {}
 all_records = []
