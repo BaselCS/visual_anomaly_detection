@@ -284,9 +284,9 @@ def calculate_anomaly_score(original_image, reconstructed_image):
     # --- المعادلة المطورة لكشف العيوب الصغيرة ---
     combined_score = (
         0.15 * l1_score + 
-        0.25 * msssim_distance + 
+        0.20 * msssim_distance + 
         0.30 * lpips_distance + 
-        0.30 * max_patch_score  # التركيز على أعلى نقطة شذوذ
+        0.40 * max_patch_score  # التركيز على أعلى نقطة شذوذ
     )
 
     return combined_score, np.transpose(diff_t.detach().cpu().numpy(), (1, 2, 0))
