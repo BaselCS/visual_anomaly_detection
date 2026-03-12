@@ -22,14 +22,14 @@ from pytorch_msssim import ms_ssim
 warnings.filterwarnings('ignore')
 
 # --- إعدادات البحث الشبكي (Grid Search Settings) ---
-STRENGTH_OPTIONS = [0.29,0.32,0.35,0.38, 0.40, 0.42, 0.45, 0.48, 0.50, 0.52, 0.55]
-GUIDANCE_OPTIONS = [5.0,5.5,6.0,6.5, 7.0, 7.5, 8.0,8.5, 9.0, 9.5, 10.0]
+STRENGTH_OPTIONS = [0.40]
+GUIDANCE_OPTIONS = [5.5]
 BEST_TRAIN_MODEL = "trained_models/train9/best_model" # النموذج الذهبي الذي اتفقنا عليه
 
 # إعدادات التقييم العامة
 DEFAULT_EVAL_CONFIG = {
     "seed": 999,
-    "categories": ["bottle"],
+    "categories": ["bottle", "capsule", "pill", "toothbrush"], # تفعيل جميع الفئات
     "calibration_fraction": 0.2,
     "reconstruction_steps": 30,
 }
