@@ -14,22 +14,37 @@ from datetime import datetime
 import logging
 import matplotlib.pyplot as plt
 
+
+torch.set_float32_matmul_precision('high')
+
 def get_next_train_dir(base_dir="trained_models"):
-    """Find the next available trainX directory"""
+    """Find the next available trainX directory by checking the highest existing number"""
     os.makedirs(base_dir, exist_ok=True)
-    train_num = 1
-    while os.path.exists(os.path.join(base_dir, f"train{train_num}")):
-        train_num += 1
-    return os.path.join(base_dir, f"train{train_num}")
+    
+    max_num = 0
+    # المرور على جميع الملفات والمجلدات داخل مجلد النماذج المدربة
+    for folder_name in os.listdir(base_dir):
+        if folder_name.startswith("train") and os.path.isdir(os.path.join(base_dir, folder_name)):
+            try:
+                # استخراج الرقم فقط من اسم المجلد (مثال: 'train9' يصبح 9)
+                num = int(folder_name.replace("train", ""))
+                if num > max_num:
+                    max_num = num
+            except ValueError:
+                # تجاهل أي مجلدات مسماة بشكل خاطئ مثل train_old
+                continue
+    
+    next_num = max_num + 1
+    return os.path.join(base_dir, f"train{next_num}")
 
 DEFAULT_CONFIG = {
     # "categories": ["bottle", "capsule", "pill", "toothbrush"],
     "categories": ["bottle"],
     "use_data_augmentation": True,  # Set to True to enable category-specific data augmentation
     "epochs": 150,
-    "batch_size": 4,                  # Optimized for 3060 12GB
+    "batch_size": 2,                  # Optimized for 3060 12GB
     "gradient_accumulation_steps": 4, # Effective batch size = 2 * 4 = 8
-    "learning_rate": 1e-7,
+    "learning_rate": 5e-5,
     "weight_decay": 1e-2,
     "max_grad_norm": 1.0,             # Gradient clipping to prevent explosion
     "lr_scheduler": "cosine",         # Learning rate decay
@@ -44,7 +59,7 @@ DEFAULT_CONFIG = {
     "early_stop_patience": 20,     # Stop if no improvement for x epochs
     "early_stop_min_delta": 1e-4,
     "min_epochs_before_early_stop": 30, # Don't allow early stopping before this many epochs
-    "num_workers": 2,              # number of subprocesses for data loading, adjust based on CPU cores and memory, Windows users may want to set this to 0 for compatibility
+    "num_workers": 4              # number of subprocesses for data loading, adjust based on CPU cores and memory, Windows users may want to set this to 0 for compatibility
 }
 
 # Configure logging
@@ -87,7 +102,7 @@ def set_seed(seed):
     except Exception:
         pass
     torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.benchmark = True
 
 
 set_seed(config["seed"])
@@ -129,6 +144,16 @@ text_encoder = pipe.text_encoder         # Text Encoder
 tokenizer = pipe.tokenizer               # Tokenizer
 unet = pipe.unet                         # U-Net
 
+# Hardware optimizations
+try:
+    pipe.enable_xformers_memory_efficient_attention()
+    out("✓ xformers memory efficient attention enabled")
+except Exception as e:
+    out(f"Warning: Could not enable xformers: {e}", level="warning")
+
+unet.enable_gradient_checkpointing()
+out("✓ Gradient checkpointing enabled")
+
 # Freeze VAE and text encoder to save memory
 vae.requires_grad_(False)
 text_encoder.requires_grad_(False)
@@ -142,11 +167,17 @@ lora_config = LoraConfig(
     lora_alpha=32,
     target_modules=["to_q", "to_v", "to_k", "to_out.0"], # to_q for query, to_v for value, to_k for key, to_out.0 for output
     lora_dropout=0.05,  # REDUCED dropout for better fitting
-    bias="none"
+    bias="none",
+    use_dora=True
 )
 
 
 unet = get_peft_model(unet, lora_config)
+
+# if hasattr(torch, 'compile'):
+#     out("Compiling U-Net with torch.compile for faster training...")
+#     unet = torch.compile(unet)
+
 out("LoRA applied:")
 unet.print_trainable_parameters()
 
@@ -388,6 +419,8 @@ def validate(unet, val_dataloader, vae, text_encoder, tokenizer, pipe, device):
             try:
                 pixel_values = batch["pixel_values"].to(device, dtype=torch.float16)
                 
+                with torch.no_grad():
+                    latents = vae.encode(pixel_values).latent_dist.sample() * 0.18215                
                 # Convert to latent space
                 latents = vae.encode(pixel_values).latent_dist.sample() * 0.18215 # Scaling factor for Stable Diffusion latent space
                 
@@ -430,7 +463,7 @@ def validate(unet, val_dataloader, vae, text_encoder, tokenizer, pipe, device):
     unet.train()
     return sum(val_losses) / len(val_losses) if val_losses else float('inf')
 
-# 7. Training Loop 
+
 
 # only optimizing LoRA parameters
 optimizer = torch.optim.AdamW(
@@ -486,6 +519,7 @@ print("\n" + "="*50)
 
 global_step = 0
 epochs_without_improvement = 0
+scaler = torch.amp.GradScaler('cuda')
 # Main training loop with validation and early stopping based on validation loss improvement
 for epoch in range(config["epochs"]):
     epoch_losses = []
@@ -493,50 +527,51 @@ for epoch in range(config["epochs"]):
     
     for step, batch in enumerate(progress_bar):
         try:
-            pixel_values = batch["pixel_values"].to(device, dtype=torch.float16)
-            # Convert images to latent space
-            with torch.no_grad():
+            # 1. إرسال البيانات للكرت بالدقة الافتراضية للتدريب (float32)
+            pixel_values = batch["pixel_values"].to(device)
+            
+            # 2. نضع كل العمليات (VAE, Text Encoder, U-Net) داخل نطاق الـ Autocast
+            # الـ Autocast سيقوم تلقائياً بتحويل البيانات لـ float16 إذا كانت الأوزان float16
+            with torch.amp.autocast('cuda'):
+                # تشفير الصورة
                 latents = vae.encode(pixel_values).latent_dist.sample() * 0.18215
-            
-            # Sample noise
-            noise = torch.randn(
-                latents.shape,
-                device=device,
-                dtype=latents.dtype,
-                generator=training_noise_generator,
-            )
-            timesteps = torch.randint(
-                0,
-                1000,
-                (latents.shape[0],),
-                device=device,
-                generator=training_noise_generator,
-            ).long()
-            noisy_latents = pipe.scheduler.add_noise(latents, noise, timesteps)
-            
-            # text embedding
-            with torch.no_grad():
+                
+                # إنشاء الضوضاء
+                noise = torch.randn(
+                    latents.shape,
+                    device=device,
+                    dtype=latents.dtype,
+                    generator=training_noise_generator,
+                )
+                timesteps = torch.randint(
+                    0, 1000, (latents.shape[0],), device=device, generator=training_noise_generator
+                ).long()
+                noisy_latents = pipe.scheduler.add_noise(latents, noise, timesteps)
+                
+                # تشفير النص
                 inputs = tokenizer(
-                    batch["prompt"], 
-                    padding="max_length", 
-                    max_length=tokenizer.model_max_length, 
-                    truncation=True,
-                    return_tensors="pt"
+                    batch["prompt"], padding="max_length", max_length=tokenizer.model_max_length, 
+                    truncation=True, return_tensors="pt"
                 ).to(device)
                 encoder_hidden_states = text_encoder(inputs.input_ids)[0]
+                
+                # توقع الضوضاء (U-Net Forward Pass)
+                noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
+                
+                # حساب الخسارة (Loss)
+                loss = torch.nn.functional.mse_loss(noise_pred, noise)
+                loss = loss / config["gradient_accumulation_steps"]
             
-            # Predict noise
-            noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
+            # 3. تحديث الأوزان باستخدام الـ Scaler
+            scaler.scale(loss).backward()
             
-            loss = torch.nn.functional.mse_loss(noise_pred, noise)
-            loss = loss / config["gradient_accumulation_steps"]
-            loss.backward()
-            # Gradient accumulation
             if (step + 1) % config["gradient_accumulation_steps"] == 0:
-                # Gradient clipping to prevent explosion
+                scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(unet.parameters(), config["max_grad_norm"])
-                optimizer.step()
-                scheduler.step()  # Update learning rate
+                
+                scaler.step(optimizer)
+                scaler.update()
+                scheduler.step()
                 optimizer.zero_grad()
                 global_step += 1
             
@@ -548,11 +583,13 @@ for epoch in range(config["epochs"]):
             print(f"\nError in training step: {e}")
             continue
 
-    # Handle leftover gradients when steps are not divisible by accumulation
+    # التعامل مع التدرجات المتبقية في نهاية العصر
     total_batches = len(epoch_losses)
     if total_batches > 0 and (total_batches % config["gradient_accumulation_steps"] != 0):
+        scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(unet.parameters(), config["max_grad_norm"])
-        optimizer.step()
+        scaler.step(optimizer)
+        scaler.update()
         scheduler.step()
         optimizer.zero_grad()
         global_step += 1

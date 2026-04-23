@@ -50,3 +50,6 @@ Performs anomaly detection on the test dataset using the trained model. It calcu
 ```bash
 uv run python anomal_score.py
 ```
+
+
+
