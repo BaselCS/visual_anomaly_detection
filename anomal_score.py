@@ -1,147 +1,116 @@
 import os
 import torch
 import gc
-import cv2
 from PIL import Image
-import numpy as np
-from diffusers import StableDiffusionControlNetImg2ImgPipeline, ControlNetModel
-from peft import PeftModel
+from diffusers import StableDiffusionImg2ImgPipeline
 from tqdm import tqdm
 import warnings
-import random
 
 from metrics_factory import MetricsFactory
 from results_logger import ResultsLogger
 
 warnings.filterwarnings('ignore')
 
-STRENGTH_OPTIONS = [0.35, 0.38, 0.40, 0.42]
-GUIDANCE_OPTIONS = [5.5, 6.0, 6.5, 7.0]
+STRENGTH_OPTIONS = [0.35, 0.40, 0.45]
+GUIDANCE_OPTIONS = [5.5, 6.5, 7.5]
+PLACEHOLDER = "<perfect-bottle>"
 
-DEFAULT_EVAL_CONFIG = {
-    "seed": 999,
-    "categories": ["bottle"], 
-    "reconstruction_steps": 30,
-    "controlnet_conditioning_scale": 0.8
-}
+def clean_vram():
+    """تنظيف ذاكرة كرت الشاشة لتجنب التوقف المفاجئ (Out of Memory)"""
+    gc.collect()
+    torch.cuda.empty_cache()
+
+def get_latest_ti_dir(base_dir="trained_models"):
+    """البحث عن أحدث مجلد خاص بتدريب الانعكاس النصي"""
+    max_num = 0
+    latest_folder = None
+    for folder_name in os.listdir(base_dir):
+        if folder_name.startswith("train_ti_"):
+            try:
+                num = int(folder_name.replace("train_ti_", ""))
+                if num > max_num:
+                    max_num = num
+                    latest_folder = folder_name
+            except ValueError:
+                continue
+    if not latest_folder: raise FileNotFoundError("No Textual Inversion training found.")
+    return os.path.join(base_dir, latest_folder)
+
+# ==========================================
+# 1. إعداد المسارات
+# ==========================================
+ti_dir = get_latest_ti_dir()
+embed_file_path = os.path.join(ti_dir, "learned_embeds.bin")
+csv_path = os.path.join(ti_dir, 'results_database.csv')
+logger = ResultsLogger(filepath=csv_path)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 metrics_gen = MetricsFactory(device=device)
 
-def get_latest_train_model(base_dir="trained_models"):
-    if not os.path.exists(base_dir): raise FileNotFoundError(f"Directory {base_dir} does not exist.")
-    max_num = 0
-    latest_folder = None
-    for folder_name in os.listdir(base_dir):
-        if folder_name.startswith("train") and os.path.isdir(os.path.join(base_dir, folder_name)):
-            try:
-                num = int(folder_name.replace("train", ""))
-                if num > max_num: 
-                    max_num = num
-                    latest_folder = folder_name  # 👈 تم استرجاع السطر المفقود هنا
-            except ValueError:
-                continue
-    if latest_folder is None: raise FileNotFoundError("No valid training found.")
-    best_model_path = os.path.join(base_dir, latest_folder, "best_model")
-    final_model_path = os.path.join(base_dir, latest_folder, "final_model")
-    if os.path.exists(best_model_path): return best_model_path
-    elif os.path.exists(final_model_path): return final_model_path
-    else: raise FileNotFoundError("No models found in the latest directory.")
-
-    
-CURRENT_TECHNIQUE = "DoRA_ControlNet" 
-BEST_TRAIN_MODEL = get_latest_train_model("trained_models")
-print(f"Auto-detected latest trained model: {BEST_TRAIN_MODEL}")
-
-TRAIN_FOLDER_ROOT = os.path.dirname(BEST_TRAIN_MODEL)
-csv_path = os.path.join(TRAIN_FOLDER_ROOT, 'results_database.csv')
-logger = ResultsLogger(filepath=csv_path)
-
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available(): torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = True
-
-def clean_vram():
-    gc.collect()
-    torch.cuda.empty_cache()
-
-def get_canny_image(image):
-    image_np = np.array(image)
-    image_cv = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
-    edges = cv2.Canny(image_cv, 100, 200)
-    edges = edges[:, :, None]
-    edges = np.concatenate([edges, edges, edges], axis=2)
-    return Image.fromarray(edges)
-
-def extract_features_for_category(pipe, category, strength, guidance):
-    test_dir = f"data/test/{category}" 
-    if not os.path.exists(test_dir):
-        test_dir = "data/test"
-        all_test_files = [f for f in os.listdir(test_dir) if f.startswith(f"{category}_")]
-    else:
-        all_test_files = os.listdir(test_dir)
-        
-    if not all_test_files: return
-
-    for img_name in tqdm(all_test_files, desc=f"Processing Images (S={strength}, G={guidance})"):
-        img_path = os.path.join(test_dir, img_name)
-        label = 0 if "good" in img_name.lower() else 1
-        
-        original_image = Image.open(img_path).convert("RGB").resize((512, 512))
-        control_image = get_canny_image(original_image)
-        generator = torch.Generator(device=device).manual_seed(DEFAULT_EVAL_CONFIG["seed"])
-
-        with torch.no_grad():
-            reconstructed_image = pipe(
-                prompt=f"a high quality photo of a perfect {category}",
-                image=original_image,
-                control_image=control_image,
-                strength=strength,
-                guidance_scale=guidance,
-                controlnet_conditioning_scale=DEFAULT_EVAL_CONFIG["controlnet_conditioning_scale"],
-                num_inference_steps=DEFAULT_EVAL_CONFIG["reconstruction_steps"],
-                generator=generator,
-            ).images[0]
-
-        scores = metrics_gen.calculate_metrics(original_image, reconstructed_image)
-        scores.update({
-            'Category': category,
-            'Technique_Used': CURRENT_TECHNIQUE,
-            'Strength': strength,
-            'Guidance': guidance,
-            'Label': label 
-        })
-        logger.log_result(scores)
-        
-    clean_vram()
-
-if __name__ == "__main__":
-    set_seed(DEFAULT_EVAL_CONFIG["seed"])
-    
-    print(f"Loading Base Model, ControlNet & {CURRENT_TECHNIQUE} Weights...")
-    controlnet = ControlNetModel.from_pretrained("lllyasviel/sd-controlnet-canny", torch_dtype=torch.float16).to(device)
-    
-    pipe = StableDiffusionControlNetImg2ImgPipeline.from_pretrained(
-        "runwayml/stable-diffusion-v1-5",
-        controlnet=controlnet,
-        torch_dtype=torch.float16
+# ==========================================
+# 2. تحميل النماذج بآلية آمنة
+# ==========================================
+print("Loading Base Pipeline (Offline Mode)...")
+try:
+    pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+        "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, local_files_only=True
     ).to(device)
-    
-    try:
-        pipe.enable_xformers_memory_efficient_attention()
-    except Exception:
-        pass
+except Exception as e:
+    print(f"Offline load failed, trying online... error: {e}")
+    pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+        "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16
+    ).to(device)
 
-    pipe.unet = PeftModel.from_pretrained(pipe.unet, BEST_TRAIN_MODEL)
-    
-    for cat in DEFAULT_EVAL_CONFIG["categories"]:
-        print(f"\n--- Feature Extraction: {cat.upper()} ---")
-        for s in STRENGTH_OPTIONS:
-            for g in GUIDANCE_OPTIONS:
-                extract_features_for_category(pipe, cat, s, g)
+try:
+    pipe.enable_xformers_memory_efficient_attention()
+except:
+    pass
 
-    print("\nFEATURE EXTRACTION COMPLETE! Data is ready for XGBoost.")
+print(f"Loading Textual Inversion Embeddings from {embed_file_path}...")
+pipe.load_textual_inversion(ti_dir, weight_name="learned_embeds.bin")
+
+# ==========================================
+# 3. إعداد البيانات وبدء الاستخراج
+# ==========================================
+test_dir = "data/test/bottle" if os.path.exists("data/test/bottle") else "data/test"
+test_files = [f for f in os.listdir(test_dir) if f.startswith("bottle_")]
+
+print(f"Extracting features using Textual Inversion token: {PLACEHOLDER}")
+
+for s in STRENGTH_OPTIONS:
+    for g in GUIDANCE_OPTIONS:
+        for img_name in tqdm(test_files, desc=f"Processing (S={s}, G={g})"):
+            img_path = os.path.join(test_dir, img_name)
+            label = 0 if "good" in img_name.lower() else 1
+            
+            try:
+                original_image = Image.open(img_path).convert("RGB").resize((512, 512))
+                generator = torch.Generator(device=device).manual_seed(999)
+
+                with torch.no_grad():
+                    reconstructed_image = pipe(
+                        prompt=f"a high quality photo of a {PLACEHOLDER}",
+                        image=original_image,
+                        strength=s,
+                        guidance_scale=g,
+                        num_inference_steps=30,
+                        generator=generator,
+                    ).images[0]
+
+                scores = metrics_gen.calculate_metrics(original_image, reconstructed_image)
+                scores.update({
+                    'Category': 'bottle',
+                    'Technique_Used': 'Textual_Inversion',
+                    'Strength': s,
+                    'Guidance': g,
+                    'Label': label 
+                })
+                logger.log_result(scores)
+                
+            except Exception as e:
+                print(f"\nError processing {img_name}: {e}. Skipping to next image.")
+                continue
+                
+        clean_vram()
+
+print("Data extraction complete. You can now run train_hybrid_xgboost.py")
