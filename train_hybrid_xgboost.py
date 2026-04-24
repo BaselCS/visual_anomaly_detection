@@ -109,11 +109,28 @@ print(f"Strict Recall:   {recall:.4f}")
 print(f"Strict Accuracy: {accuracy:.4f}")
 print("="*40 + "\n")
 
+## ==========================================
+# 4. حفظ الموديل النهائي والعتبة (Threshold)
 # ==========================================
-# 4. حفظ الموديل النهائي
-# ==========================================
+import json
+
+# 1. حساب العتبة الشاملة والموثوقة بناءً على التوقعات العمياء (OOF)
+fpr, tpr, thresholds = roc_curve(y, oof_preds_proba)
+best_idx = np.argmax(tpr - fpr)
+optimal_threshold = thresholds[best_idx]
+
+# 2. تدريب الموديل النهائي على كل البيانات
 final_model = xgb.XGBClassifier(objective='binary:logistic', n_estimators=50, learning_rate=0.05, max_depth=2, random_state=999)
 final_model.fit(X, y)
+
+# 3. حفظ الموديل
 model_path = os.path.join(latest_dir, f'xgboost_hybrid_S{TARGET_STRENGTH}_G{TARGET_GUIDANCE}.json')
 final_model.save_model(model_path)
+
+# 4. حفظ العتبة (Threshold) في ملف JSON لتتم قراءته تلقائياً في الإنتاج
+metadata_path = os.path.join(latest_dir, f'xgboost_metadata_S{TARGET_STRENGTH}_G{TARGET_GUIDANCE}.json')
+with open(metadata_path, 'w') as f:
+    json.dump({'optimal_threshold': float(optimal_threshold)}, f)
+
 print(f"Final Model saved to: {model_path}")
+print(f"Threshold metadata saved to: {metadata_path}")

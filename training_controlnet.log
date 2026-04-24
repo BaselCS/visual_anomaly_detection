@@ -1,0 +1,66 @@
+2026-04-23 23:48:41,371 - INFO - Training Configuration (ControlNet Edition):
+2026-04-23 23:48:41,371 - INFO -   categories: ['bottle']
+2026-04-23 23:48:41,371 - INFO -   use_data_augmentation: False
+2026-04-23 23:48:41,371 - INFO -   epochs: 150
+2026-04-23 23:48:41,371 - INFO -   batch_size: 2
+2026-04-23 23:48:41,371 - INFO -   gradient_accumulation_steps: 4
+2026-04-23 23:48:41,371 - INFO -   learning_rate: 5e-05
+2026-04-23 23:48:41,371 - INFO -   weight_decay: 0.01
+2026-04-23 23:48:41,371 - INFO -   max_grad_norm: 1.0
+2026-04-23 23:48:41,371 - INFO -   lr_scheduler: cosine
+2026-04-23 23:48:41,371 - INFO -   lr_warmup_steps: 100
+2026-04-23 23:48:41,372 - INFO -   lr_eta_min: 1e-06
+2026-04-23 23:48:41,372 - INFO -   save_every_n_epochs: 5
+2026-04-23 23:48:41,372 - INFO -   save_log_every_n_epochs: 5
+2026-04-23 23:48:41,372 - INFO -   output_dir: trained_models/train29
+2026-04-23 23:48:41,372 - INFO -   image_size: 512
+2026-04-23 23:48:41,372 - INFO -   train_split: 0.9
+2026-04-23 23:48:41,372 - INFO -   seed: 999
+2026-04-23 23:48:41,372 - INFO -   early_stop_patience: 20
+2026-04-23 23:48:41,372 - INFO -   early_stop_min_delta: 0.0001
+2026-04-23 23:48:41,372 - INFO -   min_epochs_before_early_stop: 30
+2026-04-23 23:48:41,372 - INFO -   num_workers: 4
+2026-04-23 23:48:41,372 - INFO - 
+Loading ControlNet Model...
+2026-04-23 23:48:43,691 - INFO - HTTP Request: HEAD https://huggingface.co/lllyasviel/sd-controlnet-canny/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-23 23:48:43,788 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/lllyasviel/sd-controlnet-canny/7f2f69197050967007f6bbd23ab5e52f0384162a/config.json "HTTP/1.1 200 OK"
+2026-04-23 23:48:43,867 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/lllyasviel/sd-controlnet-canny/7f2f69197050967007f6bbd23ab5e52f0384162a/config.json "HTTP/1.1 200 OK"
+2026-04-23 23:48:44,116 - INFO - HTTP Request: HEAD https://huggingface.co/lllyasviel/sd-controlnet-canny/resolve/7f2f69197050967007f6bbd23ab5e52f0384162a/diffusion_pytorch_model.safetensors.index.json "HTTP/1.1 404 Not Found"
+2026-04-23 23:48:44,117 - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-04-23 23:48:44,310 - INFO - HTTP Request: HEAD https://huggingface.co/lllyasviel/sd-controlnet-canny/resolve/7f2f69197050967007f6bbd23ab5e52f0384162a/diffusion_pytorch_model.safetensors "HTTP/1.1 302 Found"
+2026-04-23 23:48:44,499 - INFO - HTTP Request: GET https://huggingface.co/api/models/lllyasviel/sd-controlnet-canny/xet-read-token/7f2f69197050967007f6bbd23ab5e52f0384162a "HTTP/1.1 200 OK"
+2026-04-23 23:50:06,643 - INFO - Loading Stable Diffusion model...
+2026-04-24 04:46:40,356 - INFO - Training Configuration (ControlNet Edition):
+2026-04-24 04:46:40,356 - INFO -   categories: ['bottle']
+2026-04-24 04:46:40,356 - INFO -   use_data_augmentation: False
+2026-04-24 04:46:40,356 - INFO -   epochs: 150
+2026-04-24 04:46:40,356 - INFO -   batch_size: 2
+2026-04-24 04:46:40,356 - INFO -   gradient_accumulation_steps: 4
+2026-04-24 04:46:40,356 - INFO -   learning_rate: 5e-05
+2026-04-24 04:46:40,357 - INFO -   weight_decay: 0.01
+2026-04-24 04:46:40,357 - INFO -   max_grad_norm: 1.0
+2026-04-24 04:46:40,357 - INFO -   lr_scheduler: cosine
+2026-04-24 04:46:40,357 - INFO -   lr_warmup_steps: 100
+2026-04-24 04:46:40,357 - INFO -   lr_eta_min: 1e-06
+2026-04-24 04:46:40,357 - INFO -   save_every_n_epochs: 5
+2026-04-24 04:46:40,357 - INFO -   save_log_every_n_epochs: 5
+2026-04-24 04:46:40,357 - INFO -   output_dir: trained_models/train30
+2026-04-24 04:46:40,357 - INFO -   image_size: 512
+2026-04-24 04:46:40,357 - INFO -   train_split: 0.9
+2026-04-24 04:46:40,357 - INFO -   seed: 999
+2026-04-24 04:46:40,357 - INFO -   early_stop_patience: 20
+2026-04-24 04:46:40,357 - INFO -   early_stop_min_delta: 0.0001
+2026-04-24 04:46:40,357 - INFO -   min_epochs_before_early_stop: 30
+2026-04-24 04:46:40,357 - INFO -   num_workers: 4
+2026-04-24 04:46:40,357 - INFO - 
+Loading ControlNet Model...
+2026-04-24 04:46:42,844 - INFO - HTTP Request: HEAD https://huggingface.co/lllyasviel/sd-controlnet-canny/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-24 04:46:42,844 - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-04-24 04:46:42,929 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/lllyasviel/sd-controlnet-canny/7f2f69197050967007f6bbd23ab5e52f0384162a/config.json "HTTP/1.1 200 OK"
+2026-04-24 04:46:43,125 - INFO - HTTP Request: HEAD https://huggingface.co/lllyasviel/sd-controlnet-canny/resolve/7f2f69197050967007f6bbd23ab5e52f0384162a/diffusion_pytorch_model.safetensors.index.json "HTTP/1.1 404 Not Found"
+2026-04-24 04:46:44,533 - INFO - Loading Stable Diffusion model (Offline Mode)...
+2026-04-24 04:46:48,650 - INFO - 
+Applying LoRA configuration to U-Net...
+2026-04-24 04:46:48,948 - INFO - 
+Preparing dataset...
+2026-04-24 05:27:33,664 - INFO - Training completed and saved.
