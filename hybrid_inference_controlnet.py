@@ -6,6 +6,7 @@ import numpy as np
 import glob
 import re
 from diffusers import StableDiffusionImg2ImgPipeline
+from peft import PeftModel
 import xgboost as xgb
 from tqdm import tqdm
 import warnings
@@ -15,34 +16,30 @@ from metrics_factory import MetricsFactory
 warnings.filterwarnings('ignore')
 
 CATEGORY = "bottle"
-PLACEHOLDER = "<perfect-bottle>"
+PROMPT = "a high quality photo of a perfect bottle"
 
-def get_latest_ti_dir(base_dir="trained_models"):
-    """البحث عن أحدث مجلد خاص بتدريب الانعكاس النصي فقط"""
+def get_latest_te_lora_dir(base_dir="trained_models"):
     max_num = 0
     latest_folder = None
     for folder_name in os.listdir(base_dir):
-        if folder_name.startswith("train_ti_"):
+        if folder_name.startswith("train_te_lora_"):
             try:
-                num = int(folder_name.replace("train_ti_", ""))
+                num = int(folder_name.replace("train_te_lora_", ""))
                 if num > max_num:
                     max_num = num
                     latest_folder = folder_name
             except ValueError:
                 continue
-    if not latest_folder: raise FileNotFoundError("No Textual Inversion training found.")
+    if not latest_folder: raise FileNotFoundError("No Text Encoder LoRA training found.")
     return os.path.join(base_dir, latest_folder)
 
-latest_dir = get_latest_ti_dir()
+latest_dir = get_latest_te_lora_dir()
 
-# ==========================================
-# اكتشاف المتغيرات تلقائيا
-# ==========================================
 metadata_search_pattern = os.path.join(latest_dir, "xgboost_metadata_*.json")
 metadata_files = glob.glob(metadata_search_pattern)
 
 if not metadata_files:
-    raise FileNotFoundError(f"Could not find any metadata file in {latest_dir}. Did you run train_hybrid_xgboost.py?")
+    raise FileNotFoundError(f"Could not find metadata file in {latest_dir}.")
 
 METADATA_PATH = max(metadata_files, key=os.path.getctime)
 
@@ -52,18 +49,14 @@ if match:
     STRENGTH = float(match.group(1))
     GUIDANCE = float(match.group(2))
 else:
-    raise ValueError("Could not extract Strength and Guidance from metadata filename.")
+    raise ValueError("Could not extract Strength and Guidance.")
 
 XGB_MODEL_PATH = METADATA_PATH.replace("xgboost_metadata_", "xgboost_hybrid_")
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-print("--- QASSAS HYBRID INFERENCE SYSTEM (Textual Inversion Edition) ---")
-print(f"Auto-Detected Configurations - Strength: {STRENGTH}, Guidance: {GUIDANCE}")
+print("--- QASSAS HYBRID INFERENCE SYSTEM (Text Encoder LoRA Mode) ---")
+print(f"Auto-Detected Config - Strength: {STRENGTH}, Guidance: {GUIDANCE}")
 
-# ==========================================
-# 1. تحميل النماذج والعتبة التلقائية
-# ==========================================
 try:
     with open(METADATA_PATH, 'r') as f:
         metadata = json.load(f)
@@ -73,30 +66,36 @@ except Exception as e:
     raise FileNotFoundError(f"Could not load threshold. Error: {e}")
 
 print("Loading Base Pipeline...")
-pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
-    "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16
-).to(device)
+try:
+    pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+        "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, local_files_only=True
+    ).to(device)
+except:
+    pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+        "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16
+    ).to(device)
 
 try:
     pipe.enable_xformers_memory_efficient_attention()
 except:
     pass
 
-print(f"Loading Textual Inversion Token from {latest_dir}...")
-pipe.load_textual_inversion(latest_dir, weight_name="learned_embeds.bin")
+print(f"Applying Text Encoder LoRA Weights from: {latest_dir}")
+pipe.text_encoder = PeftModel.from_pretrained(pipe.text_encoder, latest_dir)
+pipe.text_encoder.to(device, dtype=torch.float16)
+
+def dummy_checker(image, device, dtype):
+    return image, [False] * len(image)
+
+pipe.run_safety_checker = dummy_checker
+
 
 metrics_gen = MetricsFactory(device=device)
 
-try:
-    xgb_model = xgb.XGBClassifier()
-    xgb_model.load_model(XGB_MODEL_PATH)
-    print(f"Loading XGBoost Classifier from: {XGB_MODEL_PATH}")
-except Exception as e:
-    raise FileNotFoundError(f"Could not load XGBoost model. Error: {e}")
+xgb_model = xgb.XGBClassifier()
+xgb_model.load_model(XGB_MODEL_PATH)
+print(f"Loading XGBoost Classifier from: {XGB_MODEL_PATH}")
 
-# ==========================================
-# 2. الفحص المباشر 
-# ==========================================
 test_dir = "data/test"
 if os.path.exists(os.path.join(test_dir, CATEGORY)):
     test_dir = os.path.join(test_dir, CATEGORY)
@@ -104,7 +103,7 @@ if os.path.exists(os.path.join(test_dir, CATEGORY)):
 else:
     test_files = [f for f in os.listdir(test_dir) if f.startswith(f"{CATEGORY}")]
 
-print(f"\nStarting live inspection with Textual Inversion on {len(test_files)} images...")
+print(f"\nStarting live inspection on {len(test_files)} images...")
 
 correct_predictions = 0
 total_images = len(test_files)
@@ -118,7 +117,7 @@ for img_name in tqdm(test_files, desc="Inspecting"):
 
     with torch.no_grad():
         reconstructed_image = pipe(
-            prompt=f"a high quality photo of a {PLACEHOLDER}",
+            prompt=PROMPT,
             image=original_image,
             strength=STRENGTH,
             guidance_scale=GUIDANCE,
@@ -140,7 +139,7 @@ for img_name in tqdm(test_files, desc="Inspecting"):
         print(f"\nMismatch on {img_name}: True: {true_status} | Predicted: {pred_status} (Prob: {anomaly_probability:.4f})")
 
 print("\n" + "="*40)
-print("--- TEXTUAL INVERSION LIVE INFERENCE REPORT ---")
+print("--- TEXT ENCODER LoRA LIVE INFERENCE REPORT ---")
 print(f"Total Images: {total_images}")
 print(f"Live Accuracy: {(correct_predictions/total_images)*100:.2f}%")
 print("========================================")
