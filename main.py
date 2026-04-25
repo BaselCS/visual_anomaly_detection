@@ -4,22 +4,23 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 from diffusers import StableDiffusionPipeline
-from peft import LoraConfig, get_peft_model
+from peft import OFTConfig, get_peft_model
 from tqdm import tqdm
 
+# تسريع عمليات الضرب للمصفوفات
 torch.set_float32_matmul_precision('high')
 
 def get_next_train_dir(base_dir="trained_models"):
     os.makedirs(base_dir, exist_ok=True)
     max_num = 0
     for folder_name in os.listdir(base_dir):
-        if folder_name.startswith("train_te_lora_"):
+        if folder_name.startswith("train_oft_"):
             try:
-                num = int(folder_name.replace("train_te_lora_", ""))
+                num = int(folder_name.replace("train_oft_", ""))
                 if num > max_num: max_num = num
             except ValueError:
                 continue
-    return os.path.join(base_dir, f"train_te_lora_{max_num + 1}")
+    return os.path.join(base_dir, f"train_oft_{max_num + 1}")
 
 CONFIG = {
     "category": "bottle",
@@ -27,7 +28,7 @@ CONFIG = {
     "epochs": 100,
     "batch_size": 2,
     "learning_rate": 1e-4, 
-    "lora_rank": 8,
+    "oft_r": 8,  # عدد الكتل المتعامدة (Blocks)
     "output_dir": get_next_train_dir(),
     "seed": 999
 }
@@ -55,23 +56,32 @@ text_encoder = pipe.text_encoder
 vae = pipe.vae
 unet = pipe.unet
 
-# تحويل المشفر إلى 32-بت ليعمل مع الـ GradScaler
-text_encoder.to(dtype=torch.float32)
-
-lora_config = LoraConfig(
-    r=CONFIG["lora_rank"],
-    lora_alpha=CONFIG["lora_rank"],
-    target_modules=["q_proj", "k_proj", "v_proj", "out_proj"],
-    init_lora_weights="gaussian"
-)
-
-text_encoder = get_peft_model(text_encoder, lora_config)
-text_encoder.print_trainable_parameters()
-
+# ==========================================
+# 1. تجميد النماذج بالكامل لتوفير الذاكرة
+# ==========================================
 vae.requires_grad_(False)
+text_encoder.requires_grad_(False)
 unet.requires_grad_(False)
 
-class TextEncoderLoRADataset(Dataset):
+# ==========================================
+# 2. إعداد الـ U-Net لتقنية OFT (الضبط المتعامد)
+# ==========================================
+unet.to(dtype=torch.float32)
+
+oft_config = OFTConfig(
+    r=CONFIG["oft_r"],
+    oft_block_size=0, # 🔥 الحل البرمجي لخلل مكتبة PEFT
+    target_modules=["to_q", "to_k", "to_v", "to_out.0"],
+    module_dropout=0.0,
+    init_weights=True
+)
+
+# تركيب محولات OFT على U-Net
+unet = get_peft_model(unet, oft_config)
+print("--- OFT Architecture ---")
+unet.print_trainable_parameters()
+
+class OFTDataset(Dataset):
     def __init__(self, train_dir, category):
         self.image_paths = [os.path.join(train_dir, f) for f in os.listdir(train_dir) if f.startswith(f"{category}_") and f.endswith(".png")]
         self.prompt = CONFIG["prompt"]
@@ -91,20 +101,22 @@ class TextEncoderLoRADataset(Dataset):
             next_idx = (i + 1) % len(self.image_paths)
             return self.__getitem__(next_idx)
 
-dataset = TextEncoderLoRADataset("data/train", CONFIG["category"])
+dataset = OFTDataset("data/train", CONFIG["category"])
 dataloader = DataLoader(dataset, batch_size=CONFIG["batch_size"], shuffle=True)
 
-optimizer = torch.optim.AdamW(text_encoder.parameters(), lr=CONFIG["learning_rate"])
+# تحسين أوزان الـ OFT فقط
+optimizer = torch.optim.AdamW(unet.parameters(), lr=CONFIG["learning_rate"])
 
-# إضافة الدرع الواقي (GradScaler) لمنع انفجار الـ Float16
+# الدرع الواقي (GradScaler) لمنع انفجار الأرقام
 scaler = torch.amp.GradScaler('cuda')
 
-print(f"Starting Text Encoder LoRA training...")
-text_encoder.train()
+print(f"\nStarting OFT (Orthogonal Finetuning) training...")
+unet.train()
 
 for epoch in range(CONFIG["epochs"]):
     progress_bar = tqdm(dataloader, desc=f"Epoch {epoch+1}/{CONFIG['epochs']}")
     for batch in progress_bar:
+        # VAE يعمل بدقة 16-بت
         pixel_values = batch["pixel_values"].to(device, dtype=torch.float16)
         inputs = tokenizer(batch["prompt"], padding="max_length", truncation=True, max_length=tokenizer.model_max_length, return_tensors="pt").to(device)
         
@@ -113,20 +125,22 @@ for epoch in range(CONFIG["epochs"]):
             noise = torch.randn_like(latents)
             timesteps = torch.randint(0, 1000, (latents.shape[0],), device=device).long()
             noisy_latents = pipe.scheduler.add_noise(latents, noise, timesteps)
-        
-        # تفعيل الدقة المختلطة الآمنة (Autocast)
-        with torch.amp.autocast('cuda'):
             encoder_hidden_states = text_encoder(inputs.input_ids)[0]
-            # U-Net سيحسب التفاضلات بأمان تحت حماية Autocast
-            noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
-            loss = torch.nn.functional.mse_loss(noise_pred, noise)
         
-        # التحديث الآمن باستخدام Scaler
+        # تفعيل الدقة المختلطة المحمية (Autocast)
+        with torch.amp.autocast('cuda'):
+            # 🔥 توحيد لغة الأرقام لـ 32-بت لتجنب انهيار مكتبة xformers
+            safe_noisy_latents = noisy_latents.to(dtype=torch.float32)
+            safe_encoder_hidden_states = encoder_hidden_states.to(dtype=torch.float32)
+            
+            noise_pred = unet(safe_noisy_latents, timesteps, safe_encoder_hidden_states).sample
+            loss = torch.nn.functional.mse_loss(noise_pred, noise.to(dtype=torch.float32))
+
+        # التحديث الآمن
         scaler.scale(loss).backward()
         
-        # فك التشفير للـ Clipping
         scaler.unscale_(optimizer)
-        torch.nn.utils.clip_grad_norm_(text_encoder.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(unet.parameters(), max_norm=1.0)
         
         scaler.step(optimizer)
         scaler.update()
@@ -134,5 +148,6 @@ for epoch in range(CONFIG["epochs"]):
         
         progress_bar.set_postfix({"loss": f"{loss.item():.4f}"})
 
-text_encoder.save_pretrained(CONFIG["output_dir"])
-print(f"Text Encoder LoRA training completed. Weights saved to {CONFIG['output_dir']}")
+# حفظ أوزان الـ OFT فقط
+unet.save_pretrained(CONFIG["output_dir"])
+print(f"\n✅ OFT training completed perfectly. Weights saved to {CONFIG['output_dir']}")
