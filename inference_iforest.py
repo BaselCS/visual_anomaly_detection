@@ -1,158 +1,194 @@
 import os
 import torch
 import numpy as np
-from PIL import Image
-import cv2
 import joblib
+import json
+import pandas as pd
+import gc
+import cv2  # 🔥 تمت إضافة مكتبة OpenCV لخرائط الشذوذ
+from PIL import Image
 from diffusers import StableDiffusionImg2ImgPipeline
 from peft import PeftModel
-from tqdm import tqdm
-import warnings
-import gc
-
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from metrics_factory import MetricsFactory
+from tqdm import tqdm
+from sklearn.model_selection import train_test_split
+from config import CATEGORIES, FEATURES
 
-warnings.filterwarnings('ignore')
+FORCE_RUN = True 
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# 1. إعدادات النظام (يجب أن تطابق ما استخرجنا به الخصائص)
-CATEGORY = "bottle"
-PROMPT = "a high quality photo of a perfect bottle"
-TARGET_STRENGTH = 0.40
-TARGET_GUIDANCE = 6.5
-
-# العتبة المثالية التي استخرجتها من مرحلة المعايرة
-OPTIMAL_THRESHOLD = 0.0578  
-
-def clean_vram():
+def clean_memory():
     gc.collect()
     torch.cuda.empty_cache()
 
-def get_latest_oft_dir(base_dir="trained_models"):
-    max_num = 0
-    latest_folder = None
-    for folder_name in os.listdir(base_dir):
-        if folder_name.startswith("train_oft_"):
-            try:
-                num = int(folder_name.replace("train_oft_", ""))
-                if num > max_num:
-                    max_num = num
-                    latest_folder = folder_name
-            except ValueError:
-                continue
-    if not latest_folder: raise FileNotFoundError("No OFT training found.")
-    return os.path.join(base_dir, latest_folder)
-
-# دالة توليد خريطة الشذوذ بالأبيض والأسود
-def generate_anomaly_map(original_image, reconstructed_image, save_path=None, threshold_value=70):
-    orig_np = np.array(original_image).astype(np.float32)
-    recon_np = np.array(reconstructed_image).astype(np.float32)
-
+# 🔥 دالة جديدة لإنشاء خريطة الشذوذ الحرارية (Heatmap)
+def create_anomaly_map(orig_img, recon_img):
+    orig_np = np.array(orig_img).astype(np.float32)
+    recon_np = np.array(recon_img).astype(np.float32)
+    
+    # حساب الفروقات البكسلية المطلقة
     diff = np.abs(orig_np - recon_np)
-    diff_gray = np.mean(diff, axis=2)
-
-    diff_smoothed = cv2.GaussianBlur(diff_gray, (15, 15), 0)
-    diff_normalized = cv2.normalize(diff_smoothed, None, 0, 255, cv2.NORM_MINMAX)
-    diff_8u = np.uint8(diff_normalized)
-
-    _, binary_mask = cv2.threshold(diff_8u, threshold_value, 255, cv2.THRESH_BINARY)
-    bw_pil = Image.fromarray(binary_mask, mode='L')
+    gray_diff = np.mean(diff, axis=2)
     
-    if save_path:
-        bw_pil.save(save_path)
-        
-    return bw_pil
-
-latest_dir = get_latest_oft_dir()
-IFOREST_MODEL_PATH = os.path.join(latest_dir, 'iforest_bulletproof_model.pkl')
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-print("--- QASSAS LIVE INFERENCE (ISOLATION FOREST EDITION) ---")
-print(f"Locked Threshold: {OPTIMAL_THRESHOLD}")
-
-# 2. تحميل النماذج
-print("Loading Stable Diffusion Pipeline...")
-try:
-    pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
-        "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, local_files_only=True, safety_checker=None, requires_safety_checker=False
-    ).to(device)
-except:
-    pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
-        "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, safety_checker=None, requires_safety_checker=False
-    ).to(device)
-
-try: pipe.enable_xformers_memory_efficient_attention()
-except: pass
-
-def dummy_checker(image, device, dtype): return image, [False] * len(image)
-pipe.run_safety_checker = dummy_checker
-
-print("Applying OFT Weights...")
-pipe.unet = PeftModel.from_pretrained(pipe.unet, latest_dir)
-pipe.unet.to(device, dtype=torch.float16)
-
-metrics_gen = MetricsFactory(device=device)
-
-# تحميل نموذج غابة العزل
-if_model = joblib.load(IFOREST_MODEL_PATH)
-print("Isolation Forest Model Loaded Successfully.")
-
-# 3. إعداد مجلد الاختبار
-test_dir = "data/test"
-if os.path.exists(os.path.join(test_dir, CATEGORY)):
-    test_dir = os.path.join(test_dir, CATEGORY)
-test_files = [f for f in os.listdir(test_dir) if f.startswith(f"{CATEGORY}_")]
-
-output_maps_dir = "anomaly_maps_output"
-os.makedirs(output_maps_dir, exist_ok=True)
-
-print(f"\nStarting live inspection on {len(test_files)} images...")
-
-correct_predictions = 0
-total_images = len(test_files)
-
-for img_name in tqdm(test_files, desc="Inspecting"):
-    img_path = os.path.join(test_dir, img_name)
-    true_label = 0 if "good" in img_name.lower() else 1
+    # تطبيع القيم (Normalization) لتناسب خريطة الألوان
+    gray_diff = (gray_diff - gray_diff.min()) / (gray_diff.max() - gray_diff.min() + 1e-8)
+    gray_diff = (gray_diff * 255).astype(np.uint8)
     
-    original_image = Image.open(img_path).convert("RGB").resize((512, 512))
-    generator = torch.Generator(device=device).manual_seed(999)
+    # تطبيق خريطة الحرارة (أزرق للسليم، أحمر للعيب)
+    heatmap = cv2.applyColorMap(gray_diff, cv2.COLORMAP_JET)
+    heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+    
+    # دمج خريطة الحرارة مع الصورة الأصلية بنسبة 50/50
+    overlay = cv2.addWeighted(np.array(orig_img), 0.5, heatmap, 0.5, 0)
+    return Image.fromarray(overlay)
 
+def inference_full_image(img, category, pipe, strength, guidance, metrics_gen, filename):
+    img_512 = img.resize((512, 512))
+    actual_item = os.path.basename(filename).split('_')[0] if category == "all" else category
+    prompt_text = f"a high quality photo of a perfect {actual_item}"
+    
     with torch.no_grad():
-        reconstructed_image = pipe(
-            prompt=PROMPT,
-            image=original_image,
-            strength=TARGET_STRENGTH,
-            guidance_scale=TARGET_GUIDANCE,
-            num_inference_steps=30,
-            generator=generator,
-        ).images[0]
+        recon = pipe(prompt=prompt_text, image=img_512, 
+                     strength=strength, guidance_scale=guidance, num_inference_steps=30,
+                     generator=torch.Generator(device=device).manual_seed(999)).images[0]
+    
+    sc = metrics_gen.calculate_metrics(img_512, recon)
+    
+    # 🔥 إنشاء خريطة الشذوذ
+    anomaly_map_img = create_anomaly_map(img_512, recon)
+    
+    # 🔥 دمج الصور الثلاث في لوحة واحدة (Original | Reconstructed | Anomaly Map)
+    comparison = Image.new('RGB', (1536, 512))
+    comparison.paste(img_512, (0, 0))
+    comparison.paste(recon, (512, 0))
+    comparison.paste(anomaly_map_img, (1024, 0))
+    return sc, comparison
 
-    scores = metrics_gen.calculate_metrics(original_image, reconstructed_image)
-    features_array = np.array([[scores['L1'], scores['L2'], scores['MS_SSIM'], scores['LPIPS'], scores['Max_Patch']]])
+def inference_with_patches(img, category, pipe, strength, guidance, metrics_gen, filename):
+    img_1024 = img.resize((1024, 1024))
+    patches = [
+        img_1024.crop((0, 0, 512, 512)), img_1024.crop((512, 0, 1024, 512)),
+        img_1024.crop((0, 512, 512, 1024)), img_1024.crop((512, 512, 1024, 1024))
+    ]
+    patch_metrics, recons = [], []
     
-    # حساب درجة الشذوذ (مع عكس الإشارة كما فعلنا في التدريب)
-    anomaly_score = -if_model.decision_function(features_array)[0]
+    actual_item = os.path.basename(filename).split('_')[0] if category == "all" else category
+    prompt_text = f"a high quality photo of a perfect {actual_item}"
     
-    # اتخاذ القرار بناء على العتبة المثالية
-    predicted_label = 1 if anomaly_score >= OPTIMAL_THRESHOLD else 0
-    
-    # إذا تم اكتشاف عيب، قم برسم الخريطة
-    if predicted_label == 1:
-        map_path = os.path.join(output_maps_dir, f"map_{img_name}")
-        generate_anomaly_map(original_image, reconstructed_image, save_path=map_path)
+    for patch in patches:
+        with torch.no_grad():
+            recon = pipe(prompt=prompt_text, image=patch, 
+                         strength=strength, guidance_scale=guidance, num_inference_steps=30,
+                         generator=torch.Generator(device=device).manual_seed(999)).images[0]
+        sc = metrics_gen.calculate_metrics(patch, recon)
+        patch_metrics.append(sc)
+        recons.append(recon)
         
-    if predicted_label == true_label:
-        correct_predictions += 1
-    else:
-        true_status = "Good" if true_label == 0 else "Anomaly"
-        pred_status = "Anomaly" if predicted_label == 1 else "Good"
-        print(f"\nMismatch on {img_name}: True: {true_status} | Predicted: {pred_status} (Score: {anomaly_score:.4f})")
-        
-    clean_vram()
+    final_scores = {
+        'L1': max(s['L1'] for s in patch_metrics), 'L2': max(s['L2'] for s in patch_metrics),
+        'MS_SSIM': min(s['MS_SSIM'] for s in patch_metrics), 'LPIPS': max(s['LPIPS'] for s in patch_metrics),
+        'Max_Patch': max(s['Max_Patch'] for s in patch_metrics)
+    }
+    
+    final_recon = Image.new('RGB', (1024, 1024))
+    final_recon.paste(recons[0], (0, 0)); final_recon.paste(recons[1], (512, 0))
+    final_recon.paste(recons[2], (0, 512)); final_recon.paste(recons[3], (512, 512))
+    
+    # 🔥 إنشاء خريطة الشذوذ للصورة المجمعة (1024x1024)
+    anomaly_map_img = create_anomaly_map(img_1024, final_recon)
+    
+    # 🔥 دمج الصور الثلاث في لوحة واحدة (Original | Reconstructed | Anomaly Map)
+    comparison = Image.new('RGB', (3072, 1024))
+    comparison.paste(img_1024, (0, 0))
+    comparison.paste(final_recon, (1024, 0))
+    comparison.paste(anomaly_map_img, (2048, 0))
+    return final_scores, comparison
 
-print("\n========================================")
-print("--- LIVE INFERENCE REPORT ---")
-print(f"Total Images: {total_images}")
-print(f"Live Accuracy: {(correct_predictions/total_images)*100:.2f}%")
-print(f"Anomaly maps saved to: {output_maps_dir}")
-print("========================================")
+def run_final_inference(category):
+    path = f"trained_models/model_{category}"
+    config_file = os.path.join(path, 'model_config.json')
+    report_file = os.path.join(path, 'metrics_report.json')
+    csv_file = os.path.join(path, "pure_results_database.csv")
+
+    if os.path.exists(report_file) and not FORCE_RUN:
+        with open(report_file, 'r') as f: return json.load(f) 
+
+    if not os.path.exists(config_file) or not os.path.exists(csv_file): return None
+
+    with open(config_file, 'r') as f: cfg = json.load(f)
+        
+    opt_strength = cfg.get('strength', CATEGORIES[category]['strength'])
+    opt_guidance = cfg.get('guidance', CATEGORIES[category]['guidance'])
+        
+    df = pd.read_csv(csv_file).dropna()
+    df_test_csv = df[df['Split'] == 'Test']
+    _, df_blind_test = train_test_split(df_test_csv, test_size=0.5, stratify=df_test_csv['Label'], random_state=42)
+    blind_test_filenames = set(df_blind_test['Filename'].tolist())
+        
+    print(f"\n--- Testing (BLIND HYBRID MODE) {category.upper()} [S: {opt_strength} | G: {opt_guidance}] ---")
+    pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+        "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, safety_checker=None, local_files_only=True).to(device)
+    pipe.unet = PeftModel.from_pretrained(pipe.unet, path)
+    if_model = joblib.load(os.path.join(path, 'iforest_model.pkl'))
+    metrics_gen = MetricsFactory(device=device)
+    
+    test_path = "test" if os.path.exists("test") else "data/test"
+    files = [f for f in os.listdir(test_path) if f in blind_test_filenames]
+    
+    y_true, y_pred = [], []
+    
+    # 🔥 تغيير مجلد الحفظ ليتوافق مع طلبك
+    report_img_dir = f"anomaly_maps_output/{category}"
+    os.makedirs(report_img_dir, exist_ok=True)
+
+    saved_anomalies_count = 0
+
+    for f in tqdm(files, desc=f"Inference: {category}"):
+        if not f.lower().endswith(('.png', '.jpg')): continue
+        
+        with Image.open(os.path.join(test_path, f)) as img_file:
+            img = img_file.convert("RGB")
+            
+            actual_item = os.path.basename(f).split('_')[0] if category == "all" else category
+            use_patch_mode = actual_item in ["capsule", "pill"]
+            
+            if use_patch_mode:
+                scores, comparison_img = inference_with_patches(img, category, pipe, opt_strength, opt_guidance, metrics_gen, f)
+            else:
+                scores, comparison_img = inference_full_image(img, category, pipe, opt_strength, opt_guidance, metrics_gen, f)
+                
+            feat = np.array([[scores[feat_name] for feat_name in FEATURES]]) 
+            
+            score = -if_model.decision_function(feat)[0]
+            pred = 1 if score >= cfg['optimal_threshold'] else 0
+            
+            y_true.append(0 if "good" in f.lower() else 1)
+            y_pred.append(pred)
+
+            # 🔥 سيقوم بحفظ 20 عينة معيبة بدلاً من 10 ليكون لديك صور كافية للتقرير
+            if pred == 1 and saved_anomalies_count < 20:
+                comparison_img.save(os.path.join(report_img_dir, f"heatmap_{f}"))
+                saved_anomalies_count += 1
+
+    results = {
+        "Category": category, "Accuracy": accuracy_score(y_true, y_pred),
+        "F1": f1_score(y_true, y_pred, zero_division=0),
+        "Recall": recall_score(y_true, y_pred, zero_division=0),
+        "Precision": precision_score(y_true, y_pred, zero_division=0)
+    }
+
+    with open(report_file, 'w') as f: json.dump(results, f, indent=4)
+    print(f" {category.upper()} Tested. Accuracy: {results['Accuracy']*100:.2f}%")
+    del pipe, if_model, metrics_gen
+    clean_memory()
+    return results
+
+final_stats = []
+for cat in CATEGORIES.keys():
+    res = run_final_inference(cat)
+    if res: final_stats.append(res)
+
+if final_stats:
+    pd.DataFrame(final_stats).to_csv("FINAL_QASSAS_REPORT_BLIND.csv", index=False)
+    print("\nBlind Master report saved as 'FINAL_QASSAS_REPORT_BLIND.csv'")

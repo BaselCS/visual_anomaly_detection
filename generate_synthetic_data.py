@@ -23,23 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 MODEL_ID = "runwayml/stable-diffusion-v1-5"
-DEFAULT_CATEGORIES = ["bottle", "capsule", "pill", "toothbrush"]
 CATEGORY_PROMPTS = {
-    "bottle": (
-        "Professional pharmaceutical studio photography of a perfect intact medical bottle, "
-        "flawless surface, clear cap, sharp focus, high contrast, industrial quality control standard, "
-        "4k uhd, uniform material, plain neutral background"
-    ),
-    "capsule": (
-        "Macro photography of a single perfect pharmaceutical capsule, smooth glossy gelatin shell, "
-        "seamless texture, vibrant consistent color, high detail, studio lighting, "
-        "medical grade integrity, sharp edges, plain background"
-    ),
-    "pill": (
-        "Extreme macro shot of a perfect solid pharmaceutical pill tablet, uniform matte texture, "
-        "clean precise edges, consistent geometry, professional medical product photography, "
-        "flawless surface, sharp details, solid color"
-    ),
     "toothbrush": (
         "High resolution studio photo of a brand new intact toothbrush, perfect straight bristles, "
         "flawless plastic handle, ergonomic design, industrial product photography, "
@@ -55,14 +39,14 @@ NEGATIVE_PROMPT = (
 DEFAULT_CONFIG = {
     "train_dir": "data/train",
     "output_dir": "data/train",
-    "min_blur_score": 8.0,          # Lower is blurrier. Adjust based on observed scores to filter out blurry generations.
-    "max_tries_multiplier": 3,      # Max generation attempts = target_count * multiplier. Set higher if many generations are expected to be rejected.
-    "image_size": 512,              # Stable Diffusion default is 512x512.
-    "num_steps": 35,                # Fewer steps = faster but lower quality. 
-    "guidance_scale": 8.5,          # How strongly the generation should follow the prompt. Higher values = more adherence to prompt but potentially less diversity. Adjust based on observed results.
-    "strength": 0.35,               # Fallback fixed strength if min/max are equal.
-    "strength_min": 0.25,           # Seeded random strength lower bound.
-    "strength_max": 0.35,           # Seeded random strength upper bound.
+    "min_blur_score": 8.0,          
+    "max_tries_multiplier": 3,      
+    "image_size": 512,              
+    "num_steps": 35,                
+    "guidance_scale": 8.5,          
+    "strength": 0.35,               
+    "strength_min": 0.25,           
+    "strength_max": 0.35,           
     "lighting_variants": [
         "soft studio lighting",
         "bright professional lighting",
@@ -72,18 +56,14 @@ DEFAULT_CONFIG = {
     "seed": 999,                    
     "IMAGES_PER_CATEGORY": 400,
     "deterministic": False,         
-    "num_images_per_call": 2,       # How many images to generate in parallel per pipeline call. 2 is Good for 3060
-    "enable_xformers": True,        # Enable xFormers memory-efficient attention if available 
-    "enable_attention_slicing": False, # Enable attention slicing to reduce memory usage at the cost of speed,12Gb is usually enough without this.
-    "enable_vae_slicing": False,       # Enable VAE slicing to reduce memory usage during decoding at the cost of speed, 12Gb is usually enough without this
+    "num_images_per_call": 2,       
+    "enable_xformers": True,        
+    "enable_attention_slicing": False, 
+    "enable_vae_slicing": False,       
 }
 
 
 def stable_int(text: str) -> int:
-    """
-    Generate a stable integer hash from a string. This is used to create category-specific seeds for generation that are consistent across runs, without relying on Python's built-in hash() which can vary between runs.
-    """
-
     value = 0
     for char in text:
         value = (value * 131 + ord(char)) % 1_000_000_007
@@ -124,10 +104,6 @@ def set_randomness(seed: int, deterministic: bool) -> None:
 
 
 def extract_category_and_index(filename: str) -> Tuple[str, int] | Tuple[None, None]:
-    """
-    Extract category and index from filename. Expected format: {category}_{index}.png
-    Returns (category, index) if valid, otherwise (None, None).
-    """
     if not filename.lower().endswith(".png"):
         return None, None
 
@@ -144,9 +120,6 @@ def extract_category_and_index(filename: str) -> Tuple[str, int] | Tuple[None, N
 
 
 def scan_train_dir(train_dir: str) -> Tuple[Dict[str, int], Dict[str, int]]:
-    """
-Scan the training directory to count existing images per category and determine the maximum index used for each category. This helps in naming new generated images without overwriting existing ones.
-    """
     category_counts: Dict[str, int] = {}
     category_max_idx: Dict[str, int] = {}
 
@@ -162,9 +135,6 @@ Scan the training directory to count existing images per category and determine 
 
 
 def blur_score(image: Image.Image) -> float:
-    """
-    Calculate a blur score for the image using the variance of the Laplacian. used to filter out blurry generated images.
-    """
     gray = np.asarray(image.convert("L"), dtype=np.float32)
     gx = np.diff(gray, axis=1)
     gy = np.diff(gray, axis=0)
@@ -172,35 +142,23 @@ def blur_score(image: Image.Image) -> float:
 
 
 def is_bad_image(image: Image.Image, min_size: int = 512) -> bool:
-    """
-    Reject images that are too small or visually wrong (blank, single color, or very low variance).
-    """
-    # Check size
     if image.width < min_size or image.height < min_size:
         return True
-    # Check for single color or blank image
     arr = np.array(image)
-    if arr.std() < 2.0:  # Very low variance (almost blank or single color)
+    if arr.std() < 2.0:  
         return True
-    # Optionally, check for excessive white/black
     if np.mean(arr) < 10 or np.mean(arr) > 245:
         return True
     return False
 
 
 def brightness_ok(image: Image.Image, min_mean: float = 25.0, max_mean: float = 230.0) -> bool:
-    """
-    Check if the image brightness is within acceptable bounds by calculating the mean pixel intensity. This helps filter out generated images.
-    """
     gray = np.asarray(image.convert("L"), dtype=np.float32)
     mean_val = float(gray.mean())
     return min_mean <= mean_val <= max_mean
 
 
 def build_prompt(category: str) -> str:
-    """
-    Build a prompt for generating synthetic images of a given category.
-    """
     if category in CATEGORY_PROMPTS:
         return CATEGORY_PROMPTS[category]
     return (
@@ -210,10 +168,6 @@ def build_prompt(category: str) -> str:
 
 
 def collect_category_training_images(train_dir: str, categories: List[str]) -> Dict[str, List[str]]:
-    """
-        training images -> dict of category to list of image paths.
-        used for selecting source images for img2img generation.
-    """
     category_images: Dict[str, List[str]] = {c: [] for c in categories}
     for filename in os.listdir(train_dir):
         category, _ = extract_category_and_index(filename)
@@ -225,19 +179,6 @@ def collect_category_training_images(train_dir: str, categories: List[str]) -> D
         category_images[category].sort()
 
     return category_images
-
-
-def resolve_categories(requested_categories: List[str] | None, detected_categories: List[str]) -> List[str]:
-    """
-        If user/config gives categories (requested_categories), use them directly.
-        Else, if categories were detected from files in train_dir, use those.
-        Else, fallback to DEFAULT_CATEGORIES (bottle, capsule, pill, toothbrush).
-    """
-    if requested_categories:
-        return requested_categories
-    if detected_categories:
-        return sorted(detected_categories)
-    return DEFAULT_CATEGORIES
 
 
 def load_img2img_pipeline(target_device: str, local_only: bool, config: dict) -> StableDiffusionImg2ImgPipeline:
@@ -264,9 +205,7 @@ def load_img2img_pipeline(target_device: str, local_only: bool, config: dict) ->
     return model_pipe
 
 
-
 def load_pipeline_with_fallback(config: dict) -> tuple[StableDiffusionImg2ImgPipeline, str]:
-    """Load the img2img pipeline with GPU-first policy and safe fallbacks."""
     device = "cuda" if torch.cuda.is_available() else "cpu"
     logger.info("Loading Stable Diffusion Img2Img pipeline...")
     logger.info(
@@ -302,7 +241,6 @@ def generate_for_category(
     max_tries: int,
     rejected_category_dir: str
 ) :
-    """Generate images for one category and return run statistics."""
     generated = 0
     attempted = 0
     rejected_blur = 0
@@ -420,8 +358,6 @@ def generate_for_category(
     }
 
 
-
-
 def main() -> None:
     config = dict(DEFAULT_CONFIG)
     config["seed"] = config.get("seed", random.randint(0, 1_000_000_000))
@@ -438,7 +374,9 @@ def main() -> None:
     os.makedirs(rejected_root, exist_ok=True)
 
     category_counts, category_max_idx = scan_train_dir(train_dir)
-    categories = resolve_categories(config.get("categories"), list(category_counts.keys()))
+    
+    # 🔥 التصحيح هنا: إجبار الكود على تجاهل الفئات الأخرى واعتماد فرشاة الأسنان فقط
+    categories = ["toothbrush"]
 
     logger.info("Detected category counts from train dir:")
     for category in categories:

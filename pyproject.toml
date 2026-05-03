@@ -27,4 +27,5 @@ dependencies = [
     "xformers>=0.0.35",
     "xgboost>=3.2.0",
     "opencv-python>=4.13.0.92",
+    "rembg>=2.0.75",
 ]

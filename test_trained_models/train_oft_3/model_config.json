@@ -1,0 +1,21 @@
+{
+    "category": "bottle",
+    "prompt": "a high quality photo of a perfect bottle",
+    "target_strength": 0.4,
+    "target_guidance": 6.5,
+    "optimal_threshold": 0.04725134906926465,
+    "features": [
+        "L1",
+        "L2",
+        "MS_SSIM",
+        "LPIPS",
+        "Max_Patch"
+    ],
+    "results": {
+        "auc": 0.875,
+        "f1": 0.8985507246376812,
+        "precision": 0.8378378378378378,
+        "recall": 0.96875,
+        "accuracy": 0.8333333333333334
+    }
+}
